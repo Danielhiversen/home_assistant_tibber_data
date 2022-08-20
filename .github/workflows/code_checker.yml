@@ -1,0 +1,63 @@
+name: Code checker
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        python-version:
+          - "3.9"
+          - "3.10"
+    env:
+      SRC_FOLDER: TEMPLATE_CHANGE_ME
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: pip_cache
+      - name: Install depencency
+        run: |
+            pip install dlint flake8 flake8-bandit flake8-bugbear flake8-deprecated flake8-executable isort pylint
+            pip install -r requirements.txt
+
+      - name: isort
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+            isort **/*.py
+      - name: black
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: lgeiger/black-action@master
+        with:
+            args: .
+      - name: Check for modified files
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        id: git-check
+        run: echo ::set-output name=modified::$(if git diff-index --quiet HEAD --; then echo "false"; else echo "true"; fi)
+      - name: Push changes
+        if: github.event.pull_request.head.repo.full_name == github.repository && steps.git-check.outputs.modified == 'true'
+        run: |
+            git config --global user.name 'Daniel Hoyer'
+            git config --global user.email 'mail@dahoiv.net'
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+            git checkout $GITHUB_HEAD_REF
+            git commit -am "fixup! Format Python code with black"
+            git push
+      - name: Flake8 Code Linter
+        run: |
+            flake8 $SRC_FOLDER --max-line-length=120 --extend-ignore=E203
+      - name: isort
+        run: |
+            isort **/*.py
+      - name: Pylint Code Linter
+        run: |
+            pylint --disable=C,R  --enable=unidiomatic-typecheck $SRC_FOLDER
