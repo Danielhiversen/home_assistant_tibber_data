@@ -33,7 +33,7 @@ jobs:
       - name: isort
         if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
-            isort $SRC_FOLDER/*.py
+            isort **/*.py
       - name: black
         if: github.event.pull_request.head.repo.full_name == github.repository
         uses: lgeiger/black-action@master
@@ -55,9 +55,6 @@ jobs:
       - name: Flake8 Code Linter
         run: |
             flake8 $SRC_FOLDER --max-line-length=120 --extend-ignore=E203
-      - name: isort
-        run: |
-            isort **/*.py
       - name: Pylint Code Linter
         run: |
             pylint --disable=C,R  --enable=unidiomatic-typecheck $SRC_FOLDER
