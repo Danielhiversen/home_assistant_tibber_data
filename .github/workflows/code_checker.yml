@@ -55,6 +55,3 @@ jobs:
       - name: Flake8 Code Linter
         run: |
             flake8 $SRC_FOLDER --max-line-length=120 --extend-ignore=E203
-      - name: Pylint Code Linter
-        run: |
-            pylint --disable=C,R  --enable=unidiomatic-typecheck $SRC_FOLDER
