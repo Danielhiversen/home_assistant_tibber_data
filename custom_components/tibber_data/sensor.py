@@ -11,7 +11,6 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.components.sensor import (
-    SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
     SensorStateClass,
@@ -105,16 +104,19 @@ class TibberPriceDataCoordinator(DataUpdateCoordinator):
         self._unsub_refresh = async_track_point_in_utc_time(
             self.hass,
             self._job,
-            self._next_update,
+            (dt_util.now() + datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0),
         )
 
     async def _async_update_data(self):
         """Update data via API."""
+        now = dt_util.now()
+        if now < self._next_update and self.data is not None:
+            return self.data
+
         await self.tibber_home.update_info_and_price_info()
         historic_data = await self.tibber_home.get_historic_price_data(
             tibber.const.RESOLUTION_MONTHLY
         )
-        now = dt_util.now()
         prices_tomorrow_available = False
         for key in self.tibber_home.price_total:
             price_time = dt_util.parse_datetime(key).astimezone(
