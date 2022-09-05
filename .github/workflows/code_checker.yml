@@ -27,7 +27,7 @@ jobs:
           key: pip_cache
       - name: Install depencency
         run: |
-            pip install dlint flake8 flake8-bandit flake8-bugbear flake8-deprecated flake8-executable isort pylint
+            pip install dlint flake8 flake8-deprecated flake8-executable isort pylint
             pip install -r requirements.txt
 
       - name: isort
