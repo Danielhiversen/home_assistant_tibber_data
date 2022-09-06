@@ -3,18 +3,17 @@ import datetime
 import logging
 
 import tibber
-
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.const import ENERGY_KILO_WATT_HOUR
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.components.sensor import (
-    SensorEntity,
-    SensorEntityDescription,
-    SensorDeviceClass,
-    SensorStateClass,
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
 )
 from homeassistant.util import dt as dt_util
 
@@ -51,7 +50,9 @@ async def async_setup_platform(
 ):
     dev = []
     tasks = []
-    hass.data["tibber"].user_agent += " https://github.com/Danielhiversen/home_assistant_tibber_data"
+    hass.data[
+        "tibber"
+    ].user_agent += " https://github.com/Danielhiversen/home_assistant_tibber_data"
     for home in hass.data["tibber"].get_homes(only_active=True):
         if not home.info:
             await home.update_info()
@@ -73,7 +74,9 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
         )
         if entity_description.native_unit_of_measurement is None:
             self._attr_native_unit_of_measurement = coordinator.tibber_home.price_unit
-        self._attr_name = f"{entity_description.name} {coordinator.tibber_home.address1}"
+        self._attr_name = (
+            f"{entity_description.name} {coordinator.tibber_home.address1}"
+        )
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -115,7 +118,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         data = {} if self.data is None else self.data
         if now >= self._next_update:
             await self._get_data(data, now)
-            print(self._next_update, data)
         return data
 
     async def _get_data(self, data, now):
@@ -133,7 +135,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 continue
             if date.date() == now.date() - datetime.timedelta(days=1):
                 consumption_yesterday_available = True
-
             cons = Consumption(date, _cons, _hour.get("unitPrice"))
             month_consumption.add(cons)
 
@@ -180,15 +181,21 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             month_consumption.add(Consumption(date, None, price))
 
         if prices_tomorrow_available:
-            self._next_update = min(self._next_update, (now + datetime.timedelta(days=1)).replace(
-                hour=13, minute=1, second=0, microsecond=0
-            ))
+            self._next_update = min(
+                self._next_update,
+                (now + datetime.timedelta(days=1)).replace(
+                    hour=13, minute=1, second=0, microsecond=0
+                ),
+            )
         elif now.hour >= 13:
-            self._next_update = min(self._next_update, now + datetime.timedelta(minutes=2))
+            self._next_update = min(
+                self._next_update, now + datetime.timedelta(minutes=2)
+            )
         else:
-            self._next_update = min(self._next_update, now.replace(
-                hour=13, minute=1, second=0, microsecond=0
-            ))
+            self._next_update = min(
+                self._next_update,
+                now.replace(hour=13, minute=1, second=0, microsecond=0),
+            )
 
         total_price = 0
         for val in month_consumption:
