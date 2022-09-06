@@ -1,11 +1,11 @@
 {
-  "domain": "tibber_data",
-  "name": "Tibber data",
-  "documentation": "https://github.com/Danielhiversen/home_assistant_tibber_data",
-  "requirements": ["pyTibber>=0.25.2"],
-  "after_dependencies": ["tibber"],
-  "codeowners": ["@danielhiversen"],
-  "issue_tracker": "https://github.com/Danielhiversen/home_assistant_tibber_data/issues",
-  "version": "0.1.0",
-  "config_flow": false
+    "domain": "tibber_data",
+    "name": "Tibber data",
+    "documentation": "https://github.com/Danielhiversen/home_assistant_tibber_data",
+    "requirements": ["pyTibber>=0.25.2"],
+    "after_dependencies": ["tibber"],
+    "codeowners": ["@danielhiversen"],
+    "issue_tracker": "https://github.com/Danielhiversen/home_assistant_tibber_data/issues",
+    "version": "0.1.0",
+    "config_flow": false,
 }
