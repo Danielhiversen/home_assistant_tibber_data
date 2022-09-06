@@ -203,7 +203,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             )
 
         total_price = 0
-        customer_avg_price = 0
         total_cost = 0
         total_cons = 0
         for cons in month_consumption:
