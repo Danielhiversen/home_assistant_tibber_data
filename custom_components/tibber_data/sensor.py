@@ -107,25 +107,23 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             update_interval=datetime.timedelta(minutes=2),
         )
         self.tibber_home: tibber.TibberHome = tibber_home
-        self._next_update_price = dt_util.now() - datetime.timedelta(minutes=1)
-        self._next_update_consumption = dt_util.now() - datetime.timedelta(minutes=1)
+        self._next_update = dt_util.now() - datetime.timedelta(minutes=1)
 
     async def _async_update_data(self):
         """Update data via API."""
-        now = dt_util.now()
+        now = dt_util.now(dt_util.DEFAULT_TIME_ZONE)
         data = {} if self.data is None else self.data
-        tasks = []
-        if now >= self._next_update_consumption and self.data is not None:
-            tasks.append(self._get_consumption_data(data, now))
-        if now >= self._next_update_price and self.data is not None:
-            tasks.append(self._get_price_data(data, now))
-        await asyncio.gather(*tasks)
+        if now >= self._next_update:
+            await self._get_data(data, now)
+            print(self._next_update, data)
         return data
 
-    async def _get_consumption_data(self, data, now):
+    async def _get_data(self, data, now):
         max_month = []
         cons_data = await self.tibber_home.get_historic_data(31 * 24)
         consumption_yesterday_available = False
+        month_consumption = set()
+
         for _hour in cons_data:
             _cons = _hour.get("consumption")
             if _cons is None:
@@ -136,7 +134,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             if date.date() == now.date() - datetime.timedelta(days=1):
                 consumption_yesterday_available = True
 
-            cons = Consumption(_cons, date)
+            cons = Consumption(date, _cons, _hour.get("unitPrice"))
+            month_consumption.add(cons)
+
             if len(max_month) == 0 or cons > max_month[-1]:
                 same_day = False
                 for k, _cons in enumerate(max_month):
@@ -150,66 +150,77 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 max_month.sort(reverse=True)
                 if len(max_month) > 3:
                     del max_month[-1]
-            if max_month:
-                data["peak_consumption"] = sum([x for x in max_month]) / len(max_month)
-                data["peak_consumption_attrs"] = {
-                    "peak_consumption_dates": [x.ts for x in max_month],
-                    "peak_consumptions": [x.cons for x in max_month],
-                }
-            else:
-                data["peak_consumption"] = None
-                data["peak_consumption_attrs"] = None
-
-            if consumption_yesterday_available:
-                self._next_update_price = (now + datetime.timedelta(days=1)).replace(
-                    hour=3, minute=0, second=0, microsecond=0
-                )
-            else:
-                self._next_update_price = (now + datetime.timedelta(hours=1)).replace(
-                    minute=5, second=0, microsecond=0
-                )
-
-    async def _get_price_data(self, data, now):
-        await self.tibber_home.update_info_and_price_info()
-        historic_data = await self.tibber_home.get_historic_price_data(
-            tibber.const.RESOLUTION_MONTHLY
-        )
-        prices_tomorrow_available = False
-        for key in self.tibber_home.price_total:
-            price_time = dt_util.parse_datetime(key).astimezone(
-                dt_util.DEFAULT_TIME_ZONE
-            )
-            if price_time.date() > now.date():
-                prices_tomorrow_available = True
-                break
-        if prices_tomorrow_available:
-            self._next_update_price = (now + datetime.timedelta(days=1)).replace(
-                hour=13, minute=1, second=0, microsecond=0
-            )
-        elif now.hour >= 13:
-            self._next_update_price = now + datetime.timedelta(minutes=2)
+        if max_month:
+            data["peak_consumption"] = sum([x for x in max_month]) / len(max_month)
+            data["peak_consumption_attrs"] = {
+                "peak_consumption_dates": [x.ts for x in max_month],
+                "peak_consumptions": [x.cons for x in max_month],
+            }
         else:
-            self._next_update_price = now.replace(
-                hour=13, minute=1, second=0, microsecond=0
+            data["peak_consumption"] = None
+            data["peak_consumption_attrs"] = None
+        await self.tibber_home.update_price_info()
+
+        if consumption_yesterday_available:
+            self._next_update = (now + datetime.timedelta(days=1)).replace(
+                hour=3, minute=0, second=0, microsecond=0
             )
-        for val in historic_data:
-            date = dt_util.parse_datetime(val["time"])
-            if now.month == date.month and now.year == date.year:
-                data["monthly_avg_price"] = val["total"]
-                data["est_subsidy"] = (val["total"] - 0.7 * 1.25) * 0.9
+        else:
+            self._next_update = (now + datetime.timedelta(hours=1)).replace(
+                minute=5, second=0, microsecond=0
+            )
+
+        prices_tomorrow_available = False
+        for key, price in self.tibber_home.price_total.items():
+            date = dt_util.parse_datetime(key)
+            if date.date() == now.date() + datetime.timedelta(days=1):
+                prices_tomorrow_available = True
+            if not (date.month == now.month and date.year == now.year):
+                continue
+            month_consumption.add(Consumption(date, None, price))
+
+        if prices_tomorrow_available:
+            self._next_update = min(self._next_update, (now + datetime.timedelta(days=1)).replace(
+                hour=13, minute=1, second=0, microsecond=0
+            ))
+        elif now.hour >= 13:
+            self._next_update = min(self._next_update, now + datetime.timedelta(minutes=2))
+        else:
+            self._next_update = min(self._next_update, now.replace(
+                hour=13, minute=1, second=0, microsecond=0
+            ))
+
+        total_price = 0
+        for val in month_consumption:
+            total_price += val.price
+        data["monthly_avg_price"] = total_price / len(month_consumption)
+        data["est_subsidy"] = (data["monthly_avg_price"] - 0.7 * 1.25) * 0.9
 
 
 class Consumption:
-    def __init__(self, cons, ts):
-        self.cons = cons
+    def __init__(self, ts, cons, price):
         self.ts = ts
+        self.cons = cons
+        self.price = price
 
     @property
     def day(self):
         return dt_util.as_local(self.ts).date()
 
     def __lt__(self, other):
+        if self.cons is None and other.cons is None:
+            return self.ts < other.ts
+        if self.cons is None:
+            return True
+        if other.cons is None:
+            return False
         return self.cons < other.cons
+
+    def __eq__(self, other):
+        return self.ts == other.ts
+
+    def __hash__(self):
+        return hash(self.ts)
 
     def __radd__(self, other):
         return other + self.cons
