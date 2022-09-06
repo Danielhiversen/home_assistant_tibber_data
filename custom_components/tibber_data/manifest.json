@@ -7,5 +7,6 @@
     "codeowners": ["@danielhiversen"],
     "issue_tracker": "https://github.com/Danielhiversen/home_assistant_tibber_data/issues",
     "version": "0.1.0",
+    "iot_class": "cloud_pull",
     "config_flow": false
 }
