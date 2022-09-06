@@ -33,6 +33,11 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
+        key="customer_avg_price",
+        name="Monthly avg customer price",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
         key="est_subsidy",
         name="Estimated subsidy",
         state_class=SensorStateClass.MEASUREMENT,
@@ -135,7 +140,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 continue
             if date.date() == now.date() - datetime.timedelta(days=1):
                 consumption_yesterday_available = True
-            cons = Consumption(date, _cons, _hour.get("unitPrice"))
+            cons = Consumption(date, _cons, _hour.get("unitPrice"), _hour.get("cost"))
             month_consumption.add(cons)
 
             if len(max_month) == 0 or cons > max_month[-1]:
@@ -178,7 +183,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 prices_tomorrow_available = True
             if not (date.month == now.month and date.year == now.year):
                 continue
-            month_consumption.add(Consumption(date, None, price))
+            month_consumption.add(Consumption(date, None, price, None))
 
         if prices_tomorrow_available:
             self._next_update = min(
@@ -198,17 +203,24 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             )
 
         total_price = 0
-        for val in month_consumption:
-            total_price += val.price
+        customer_avg_price = 0
+        total_cost = 0
+        total_cons = 0
+        for cons in month_consumption:
+            total_price += cons.price
+            total_cost += cons.cost if cons.cost else 0
+            total_cons += cons.cons if cons.cons else 0
         data["monthly_avg_price"] = total_price / len(month_consumption)
         data["est_subsidy"] = (data["monthly_avg_price"] - 0.7 * 1.25) * 0.9
+        data["customer_avg_price"] = total_cost / total_cons
 
 
 class Consumption:
-    def __init__(self, ts, cons, price):
+    def __init__(self, ts, cons, price, cost):
         self.ts = ts
         self.cons = cons
         self.price = price
+        self.cost = cost
 
     @property
     def day(self):
