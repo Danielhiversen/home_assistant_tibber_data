@@ -199,8 +199,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
         total_price = 0
         for val in month_consumption:
-            if val.price is None:
-                continue
             total_price += val.price
         data["monthly_avg_price"] = total_price / len(month_consumption)
         data["est_subsidy"] = (data["monthly_avg_price"] - 0.7 * 1.25) * 0.9
