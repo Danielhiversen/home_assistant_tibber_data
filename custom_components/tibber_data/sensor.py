@@ -3,19 +3,13 @@ import datetime
 import logging
 
 import tibber
-
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-)
+from homeassistant.components.sensor import (SensorDeviceClass, SensorEntity,
+                                             SensorEntityDescription,
+                                             SensorStateClass)
 from homeassistant.const import ENERGY_KILO_WATT_HOUR
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.components.sensor import (
-    SensorEntity,
-    SensorEntityDescription,
-    SensorDeviceClass,
-    SensorStateClass,
-)
+from homeassistant.helpers.update_coordinator import (CoordinatorEntity,
+                                                      DataUpdateCoordinator)
 from homeassistant.util import dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
@@ -115,7 +109,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         data = {} if self.data is None else self.data
         if now >= self._next_update:
             await self._get_data(data, now)
-            print(self._next_update, data)
         return data
 
     async def _get_data(self, data, now):
@@ -133,7 +126,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 continue
             if date.date() == now.date() - datetime.timedelta(days=1):
                 consumption_yesterday_available = True
-
             cons = Consumption(date, _cons, _hour.get("unitPrice"))
             month_consumption.add(cons)
 
@@ -192,6 +184,8 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
         total_price = 0
         for val in month_consumption:
+            if val.price is None:
+                continue
             total_price += val.price
         data["monthly_avg_price"] = total_price / len(month_consumption)
         data["est_subsidy"] = (data["monthly_avg_price"] - 0.7 * 1.25) * 0.9
