@@ -11,7 +11,15 @@ If you use this link to signup for Tibber, you get 50 euro to buy smart home pro
 
 [Buy me a coffee :)](http://paypal.me/dahoiv)
 
+You get the following sensors:
+* Monthly avg price
+* Estimated subsidy
+* Estimated price with subsidy
+* Average of 3 highest hourly consumption (from 3 different days)
+
+
 ## Install
+Requires pyTibber >= 0.25.0 and Tibber integration in Home Assistant.
 https://hacs.xyz/docs/faq/custom_repositories
 
 ## Configuration 
