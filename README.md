@@ -13,6 +13,7 @@ If you use this link to signup for Tibber, you get 50 euro to buy smart home pro
 
 You get the following sensors:
 * Monthly avg price
+* Monthly avg customer price
 * Estimated subsidy
 * Estimated price with subsidy
 * Average of 3 highest hourly consumption (from 3 different days)
