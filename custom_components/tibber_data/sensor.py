@@ -124,6 +124,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         """Update data via API."""
         now = dt_util.now(dt_util.DEFAULT_TIME_ZONE)
         data = {} if self.data is None else self.data
+        _LOGGER.debug("Updating Tibber data %s", self._next_update)
         if now >= self._next_update:
             await self._get_data(data, now)
         return data
