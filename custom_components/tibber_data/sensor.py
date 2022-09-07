@@ -92,9 +92,9 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 "est_subsidy", 0
             )
         else:
-            self._attr_native_value = self.coordinator.data.get(
+            self._attr_native_value = round(self.coordinator.data.get(
                 self.entity_description.key
-            )
+            ), 2)
         if self.entity_description.key == "peak_consumption":
             self._attr_extra_state_attributes = self.coordinator.data.get(
                 "peak_consumption_attrs"
