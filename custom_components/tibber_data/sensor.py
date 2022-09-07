@@ -1,3 +1,4 @@
+"""Tibber data"""
 import asyncio
 import datetime
 import logging
@@ -51,8 +52,9 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
 
 
 async def async_setup_platform(
-    hass: HomeAssistant, config, async_add_entities, discovery_info=None
+    hass: HomeAssistant, _, async_add_entities, __=None
 ):
+    """Set up the Tibber sensor."""
     dev = []
     tasks = []
     hass.data[
@@ -70,6 +72,7 @@ async def async_setup_platform(
 
 
 class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"]):
+    """Representation of a Tibber sensor."""
     def __init__(self, coordinator, entity_description):
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
@@ -92,9 +95,9 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 "est_subsidy", 0
             )
         else:
-            self._attr_native_value = round(self.coordinator.data.get(
-                self.entity_description.key
-            ), 2)
+            self._attr_native_value = round(
+                self.coordinator.data.get(self.entity_description.key), 2
+            )
         if self.entity_description.key == "peak_consumption":
             self._attr_extra_state_attributes = self.coordinator.data.get(
                 "peak_consumption_attrs"
@@ -126,6 +129,8 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         return data
 
     async def _get_data(self, data, now):
+        """Get data from Tibber."""
+        # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         max_month = []
         cons_data = await self.tibber_home.get_historic_data(31 * 24)
         consumption_yesterday_available = False
@@ -157,9 +162,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 if len(max_month) > 3:
                     del max_month[-1]
         if max_month:
-            data["peak_consumption"] = sum([x for x in max_month]) / len(max_month)
+            data["peak_consumption"] = sum(max_month) / len(max_month)
             data["peak_consumption_attrs"] = {
-                "peak_consumption_dates": [x.ts for x in max_month],
+                "peak_consumption_dates": [x.timestamp for x in max_month],
                 "peak_consumptions": [x.cons for x in max_month],
             }
         else:
@@ -215,19 +220,22 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
 
 class Consumption:
-    def __init__(self, ts, cons, price, cost):
-        self.ts = ts
+    """Consumption data."""
+    def __init__(self, timestamp, cons, price, cost):
+        """Initialize the data."""
+        self.timestamp = timestamp
         self.cons = cons
         self.price = price
         self.cost = cost
 
     @property
     def day(self):
-        return dt_util.as_local(self.ts).date()
+        """Return day."""
+        return dt_util.as_local(self.timestamp).date()
 
     def __lt__(self, other):
         if self.cons is None and other.cons is None:
-            return self.ts < other.ts
+            return self.timestamp < other.timestamp
         if self.cons is None:
             return True
         if other.cons is None:
@@ -235,16 +243,16 @@ class Consumption:
         return self.cons < other.cons
 
     def __eq__(self, other):
-        return self.ts == other.ts
+        return self.timestamp == other.timestamp
 
     def __hash__(self):
-        return hash(self.ts)
+        return hash(self.timestamp)
 
     def __radd__(self, other):
         return other + self.cons
 
     def __str__(self):
-        return f"Cons({self.cons:.2f}, {self.ts})"
+        return f"Cons({self.timestamp}, {self.cons:.2f})"
 
     def __repr__(self):
-        return f"Cons({self.cons:.2f}, {self.ts})"
+        return f"Cons({self.timestamp}, {self.cons:.2f})"
