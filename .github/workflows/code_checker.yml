@@ -17,34 +17,35 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: pip_cache
+          cache: 'pip'
       - name: Install depencency
         run: |
-            pip install dlint flake8 flake8-deprecated flake8-executable isort pylint
-            pip install -r requirements.txt
-
+          pip install dlint flakeheaven flake8-deprecated flake8-executable isort pylint black mypy homeassistant pyTibber
       - name: isort
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-            isort **/*.py
-      - name: black
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: lgeiger/black-action@master
-        with:
-            args: .
+        run: isort $SRC_FOLDER
       - name: Check for modified files
-        if: github.event.pull_request.head.repo.full_name == github.repository
+        id: git-check-isort
+        run: git diff --quiet || echo "::set-output name=modified::true"
+      - name: Push changes isort
+        if: steps.git-check-isort.outputs.modified == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+            git config --global user.name 'Daniel Hoyer'
+            git config --global user.email 'mail@dahoiv.net'
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+            git checkout $GITHUB_HEAD_REF
+            git commit -am "fixup! Format Python code with isort"
+            git push
+
+      - name: black
+        run: black $SRC_FOLDER
+      - name: Check for modified files
         id: git-check
-        run: echo ::set-output name=modified::$(if git diff-index --quiet HEAD --; then echo "false"; else echo "true"; fi)
-      - name: Push changes
-        if: github.event.pull_request.head.repo.full_name == github.repository && steps.git-check.outputs.modified == 'true'
+        run: git diff --quiet || echo "::set-output name=modified::true"
+      - name: Push changes black
+        if: steps.git-check-isort.outputs.modified == 'true' && github.event.pull_request.head.repo.full_name == github.repository
         run: |
             git config --global user.name 'Daniel Hoyer'
             git config --global user.email 'mail@dahoiv.net'
@@ -52,6 +53,11 @@ jobs:
             git checkout $GITHUB_HEAD_REF
             git commit -am "fixup! Format Python code with black"
             git push
+
       - name: Flake8 Code Linter
-        run: |
-            flake8 $SRC_FOLDER --max-line-length=120 --extend-ignore=E203
+        run: flakeheaven lint $SRC_FOLDER
+      - name: Mypy Code Linter
+        run: mypy $SRC_FOLDER
+      - name: Pylint Code Linter
+        run: pylint $SRC_FOLDER
+
