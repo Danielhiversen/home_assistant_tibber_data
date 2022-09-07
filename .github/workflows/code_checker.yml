@@ -33,7 +33,7 @@ jobs:
       - name: isort
         if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
-            isort **/*.py
+            isort --profile black $SRC_FOLDER
       - name: black
         if: github.event.pull_request.head.repo.full_name == github.repository
         uses: lgeiger/black-action@master
