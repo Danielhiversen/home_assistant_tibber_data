@@ -216,7 +216,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         total_cost = 0
         total_cons = 0
         for cons in month_consumption:
-            total_price += cons.price
+            total_price += cons.price if cons.price else 0
             total_cost += cons.cost if cons.cost else 0
             total_cons += cons.cons if cons.cons else 0
         data["monthly_avg_price"] = total_price / len(month_consumption)
