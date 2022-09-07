@@ -18,6 +18,8 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.util import dt as dt_util
 
+DOMAIN = "tibber_data"
+
 _LOGGER = logging.getLogger(__name__)
 
 SENSORS: tuple[SensorEntityDescription, ...] = (
@@ -55,11 +57,12 @@ async def async_setup_platform(
     hass: HomeAssistant, _, async_add_entities, __=None
 ):
     """Set up the Tibber sensor."""
-    dev = []
-    tasks = []
+    hass.data[DOMAIN] = {}
     hass.data[
         "tibber"
     ].user_agent += " https://github.com/Danielhiversen/home_assistant_tibber_data"
+    dev = []
+    tasks = []
     for home in hass.data["tibber"].get_homes(only_active=True):
         if not home.info:
             await home.update_info()
@@ -191,6 +194,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 continue
             month_consumption.add(Consumption(date, None, price, None))
 
+        self.hass.data[DOMAIN][f"month_consumption_{self.tibber_home.home_id}"] = month_consumption
         if prices_tomorrow_available:
             self._next_update = min(
                 self._next_update,
