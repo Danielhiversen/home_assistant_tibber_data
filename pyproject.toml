@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta:__legacy__"
+
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+    "too-many-instance-attributes",
+    "too-few-public-methods",
+]
+enable = ["unidiomatic-typecheck", ]
+max-line-length=120
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+follow_imports = "silent"
+ignore_missing_imports = true
+
+[tool.flakeheaven]
+max_line_length = 120
+# make output nice
+format = "grouped"
+# show line of source code in output
+show_source = true
+
+[tool.flakeheaven.plugins]
+pyflakes = ["+*"]
+"flake8-*" = ["+*"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+norecursedirs = [
+    ".git",
+]
