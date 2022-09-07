@@ -22,7 +22,7 @@ jobs:
           cache: 'pip'
       - name: Install depencency
         run: |
-          pip install dlint flake8 flake8-deprecated flake8-executable isort pylint homeassistant
+          pip install dlint flake8 flake8-deprecated flake8-executable isort pylint black mypy homeassistant
       - name: isort
         run: isort $SRC_FOLDER
       - name: Check for modified files
