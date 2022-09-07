@@ -2,6 +2,7 @@ name: Code checker
 
 on:
   push:
+  pull_request:
 
 jobs:
   validate:
@@ -23,7 +24,7 @@ jobs:
         run: |
           pip install dlint flake8 flake8-deprecated flake8-executable isort pylint homeassistant
       - name: isort
-        run:  pipenv run isort $SRC_FOLDER
+        run: isort $SRC_FOLDER
       - name: Check for modified files
         id: git-check-isort
         run: git diff --quiet || echo "::set-output name=modified::true"
@@ -38,7 +39,7 @@ jobs:
             git push
 
       - name: black
-        run: pipenv run black $SRC_FOLDER & pipenv run black tests
+        run: black $SRC_FOLDER
       - name: Check for modified files
         id: git-check
         run: git diff --quiet || echo "::set-output name=modified::true"
@@ -53,9 +54,9 @@ jobs:
             git push
 
       - name: Flake8 Code Linter
-        run: pipenv run flakeheaven lint $SRC_FOLDER
+        run: flakeheaven lint $SRC_FOLDER
       - name: Mypy Code Linter
-        run: pipenv run mypy $SRC_FOLDER
+        run: mypy $SRC_FOLDER
       - name: Pylint Code Linter
         run: pipenv run pylint $SRC_FOLDER
 
