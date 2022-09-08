@@ -94,13 +94,13 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
         """Handle updated data from the coordinator."""
         if self.entity_description.key == "est_current_price_with_subsidy":
             price_data = self.coordinator.tibber_home.current_price_data()
-            self._attr_native_value = round(price_data[0] - self.coordinator.data.get(
+            native_value = price_data[0] - self.coordinator.data.get(
                 "est_subsidy", 0
-            ), 2)
-        else:
-            self._attr_native_value = round(
-                self.coordinator.data.get(self.entity_description.key), 2
             )
+        else:
+            native_value = self.coordinator.data.get(self.entity_description.key)
+
+        self._attr_native_value = round(native_value, 2) if native_value else native_value
         if self.entity_description.key == "peak_consumption":
             self._attr_extra_state_attributes = self.coordinator.data.get(
                 "peak_consumption_attrs"
