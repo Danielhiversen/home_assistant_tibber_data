@@ -1,0 +1,10 @@
+pyTibber
+homeassistant
+dlint
+flakeheaven
+flake8-deprecated
+flake8-executable
+isort
+pylint
+black
+mypy  
