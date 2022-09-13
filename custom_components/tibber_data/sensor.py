@@ -181,9 +181,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 hour=3, minute=0, second=0, microsecond=0
             )
         else:
-            self._next_update = (now + datetime.timedelta(hours=1)).replace(
-                minute=5, second=0, microsecond=0
-            )
+            self._next_update = now + datetime.timedelta(minutes=15)
 
         prices_tomorrow_available = False
         for key, price in self.tibber_home.price_total.items():
@@ -199,7 +197,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             self._next_update = min(
                 self._next_update,
                 (now + datetime.timedelta(days=1)).replace(
-                    hour=13, minute=1, second=0, microsecond=0
+                    hour=13, minute=0, second=0, microsecond=0
                 ),
             )
         elif now.hour >= 13:
@@ -213,13 +211,15 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             )
 
         total_price = 0
+        n_price = 0
         total_cost = 0
         total_cons = 0
         for cons in month_consumption:
             total_price += cons.price if cons.price else 0
+            n_price += 1 if cons.price else 0
             total_cost += cons.cost if cons.cost else 0
             total_cons += cons.cons if cons.cons else 0
-        data["monthly_avg_price"] = total_price / len(month_consumption)
+        data["monthly_avg_price"] = total_price / n_price
         data["est_subsidy"] = (data["monthly_avg_price"] - 0.7 * 1.25) * 0.9
         data["customer_avg_price"] = total_cost / total_cons
 
@@ -257,7 +257,10 @@ class Consumption:
         return other + self.cons
 
     def __str__(self):
-        return f"Cons({self.timestamp}, {self.cons:.2f})"
+        cons = f"{self.cons:.2f}" if self.cons else "-"
+        cost = f"{self.cost:.2f}" if self.cost else "-"
+        price = f"{self.price:.2f}" if self.price else "-"
+        return f"Cons({self.timestamp}, {cons}, {price}, {cost})"
 
     def __repr__(self):
-        return f"Cons({self.timestamp}, {self.cons:.2f})"
+        return self.__str__()
