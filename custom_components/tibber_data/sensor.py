@@ -1,5 +1,6 @@
 """Tibber data"""
 import asyncio
+import base64
 import datetime
 import logging
 
@@ -136,7 +137,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         """Get data from Tibber."""
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         max_month = []
-        cons_data = await self.tibber_home.get_historic_data(31 * 24)
+        cons_data = await get_historic_data(self.tibber_home, self.hass.data["tibber"])
         consumption_yesterday_available = False
         month_consumption = set()
 
@@ -193,6 +194,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             month_consumption.add(Consumption(date, None, price, None))
 
         self.hass.data[DOMAIN][f"month_consumption_{self.tibber_home.home_id}"] = month_consumption
+
         if prices_tomorrow_available:
             self._next_update = min(
                 self._next_update,
@@ -264,3 +266,33 @@ class Consumption:
 
     def __repr__(self):
         return self.__str__()
+
+
+async def get_historic_data(tibber_home: tibber.TibberHome, tibber_controller: tibber.Tibber):
+    query = """
+            {{
+              viewer {{
+                home(id: "{0}") {{
+                  consumption(resolution: HOURLY, last: 744, before:"{1}") {{
+                    nodes {{
+                      consumption
+                      cost
+                      from
+                      unitPrice
+                    }}
+                  }}
+                }}
+              }}
+            }}
+      """.format(
+        tibber_home.home_id,
+        base64.b64encode(datetime.datetime.now().isoformat().encode('ascii')).decode(),
+    )
+
+    if not (data := await tibber_controller.execute(query)):
+        _LOGGER.error("Could not find the data.")
+        return None
+    data = data["viewer"]["home"]["consumption"]
+    if data is None:
+        return None
+    return data["nodes"]
