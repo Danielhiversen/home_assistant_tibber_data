@@ -212,17 +212,23 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 now.replace(hour=13, minute=1, second=0, microsecond=0),
             )
 
+        _total_price = 0
+        _n_price = 0
         total_price = 0
         n_price = 0
         total_cost = 0
         total_cons = 0
         for cons in month_consumption:
+            _total_price += cons.price if cons.price else 0
+            _n_price += 1 if cons.price else 0
+            if cons.cost is None or cons.cons is None:
+                continue
             total_price += cons.price if cons.price else 0
             n_price += 1 if cons.price else 0
-            total_cost += cons.cost if cons.cost else 0
-            total_cons += cons.cons if cons.cons else 0
+            total_cost += cons.cost
+            total_cons += cons.cons
         data["monthly_avg_price"] = total_price / n_price
-        data["est_subsidy"] = (data["monthly_avg_price"] - 0.7 * 1.25) * 0.9
+        data["est_subsidy"] = (_total_price / _n_price - 0.7 * 1.25) * 0.9
         data["customer_avg_price"] = total_cost / total_cons
 
 
