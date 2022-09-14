@@ -20,7 +20,7 @@ You get the following sensors:
 
 
 ## Install
-Requires pyTibber >= 0.25.1 and Tibber integration in Home Assistant.
+Requires Tibber integration in Home Assistant.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Danielhiversen&repository=home_assistant_tibber_data&category=integration)
 
