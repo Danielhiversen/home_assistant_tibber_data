@@ -269,6 +269,8 @@ class Consumption:
 
 
 async def get_historic_data(tibber_home: tibber.TibberHome, tibber_controller: tibber.Tibber):
+    """Get historic data."""
+    # pylint: disable=consider-using-f-string
     query = """
             {{
               viewer {{
