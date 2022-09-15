@@ -13,13 +13,14 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import ENERGY_KILO_WATT_HOUR
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
 )
 from homeassistant.util import dt as dt_util
 
-from .helpers import get_historic_data
+from .helpers import get_historic_data, get_tibber_data, get_tibber_token
 
 DOMAIN = "tibber_data"
 
@@ -67,15 +68,13 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
     ),
     SensorEntityDescription(
         key="grid_price",
-        name="Current grid price",
+        name="Grid price",
         state_class=SensorStateClass.MEASUREMENT,
     ),
 )
 
 
-async def async_setup_platform(
-    hass: HomeAssistant, _, async_add_entities, config
-):
+async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, config):
     """Set up the Tibber sensor."""
     hass.data[DOMAIN] = {}
     dev = []
@@ -84,12 +83,17 @@ async def async_setup_platform(
         home = cast(tibber.TibberHome, home)
         if not home.info:
             await home.update_info()
-        coordinator = TibberDataCoordinator(hass, home, config.get("password"))
+        coordinator = TibberDataCoordinator(
+            hass, home, config.get("email"), config.get("password")
+        )
         tasks.append(coordinator.async_request_refresh())
         for entity_description in SENSORS:
-            if entity_description.key in ("daily_cost_with_subsidy", ) and not home.has_real_time_consumption:
+            if (
+                entity_description.key in ("daily_cost_with_subsidy",)
+                and not home.has_real_time_consumption
+            ):
                 continue
-            if entity_description.key in ("grid_price", ) and not config.get("password"):
+            if entity_description.key in ("grid_price",) and not config.get("password"):
                 continue
             dev.append(TibberDataSensor(coordinator, entity_description))
     async_add_entities(dev)
@@ -98,6 +102,7 @@ async def async_setup_platform(
 
 class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"]):
     """Representation of a Tibber sensor."""
+
     def __init__(self, coordinator, entity_description):
         """Initialize the sensor."""
         super().__init__(coordinator=coordinator)
@@ -109,7 +114,9 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             if entity_description.device_class == SensorDeviceClass.MONETARY:
                 self._attr_native_unit_of_measurement = coordinator.tibber_home.currency
             else:
-                self._attr_native_unit_of_measurement = coordinator.tibber_home.price_unit
+                self._attr_native_unit_of_measurement = (
+                    coordinator.tibber_home.price_unit
+                )
         self._attr_name = (
             f"{entity_description.name} {coordinator.tibber_home.address1}"
         )
@@ -119,13 +126,17 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
         """Handle updated data from the coordinator."""
         if self.entity_description.key == "est_current_price_with_subsidy":
             price_data = self.coordinator.tibber_home.current_price_data()
-            native_value = price_data[0] - self.coordinator.data.get(
-                "est_subsidy", 0
-            )
+            native_value = price_data[0] - self.coordinator.data.get("est_subsidy", 0)
+        elif self.entity_description.key == "grid_price":
+            native_value = self.coordinator.data.get(
+                self.entity_description.key, {}
+            ).get(dt_util.now().replace(minute=0, second=0, microsecond=0))
         else:
             native_value = self.coordinator.data.get(self.entity_description.key)
 
-        self._attr_native_value = round(native_value, 2) if native_value else native_value
+        self._attr_native_value = (
+            round(native_value, 2) if native_value else native_value
+        )
         if self.entity_description.key == "peak_consumption":
             self._attr_extra_state_attributes = self.coordinator.data.get(
                 "peak_consumption_attrs"
@@ -137,7 +148,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
 class TibberDataCoordinator(DataUpdateCoordinator):
     """Handle Tibber data."""
 
-    def __init__(self, hass, tibber_home: tibber.TibberHome, password: str):
+    def __init__(self, hass, tibber_home: tibber.TibberHome, email: str, password: str):
         """Initialize the data handler."""
         super().__init__(
             hass,
@@ -146,8 +157,15 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             update_interval=datetime.timedelta(minutes=2),
         )
         self.tibber_home: tibber.TibberHome = tibber_home
+        self.email = email
         self._password = password
-        self._update_functions = {self._get_data: dt_util.now() - datetime.timedelta(minutes=1), }
+        self._token = None
+        _next_update = dt_util.now() - datetime.timedelta(minutes=1)
+        self._update_functions = {
+            self._get_data: _next_update,
+        }
+        if self._password:
+            self._update_functions[self._get_data_tibber] = _next_update
 
     async def _async_update_data(self):
         """Update data via API."""
@@ -158,6 +176,36 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             if now >= next_update:
                 self._update_functions[func] = await func(data, now)
         return data
+
+    async def _get_data_tibber(self, data, now):
+        """Update data via Tibber API."""
+        session = async_get_clientsession(self.hass)
+        if self._token is None:
+            self._token = await get_tibber_token(session, self.email, self._password)
+            if self._token is None:
+                return now + datetime.timedelta(minutes=2)
+
+        try:
+            _data = await get_tibber_data(session, self._token)
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Error fetching Tibber data")
+            self._token = None
+            return now + datetime.timedelta(minutes=2)
+
+        for home in _data["data"]["me"]["homes"]:
+            if home["id"] != self.tibber_home.home_id:
+                continue
+            data["grid_price"] = {}
+            for price_info in home["subscription"]["priceRating"]["hourly"]["entries"]:
+                data["grid_price"][
+                    dt_util.parse_datetime(price_info["time"])
+                ] = price_info["gridPrice"]
+
+        if now.hour < 15:
+            return now.replace(hour=15, minute=0, second=0, microsecond=0)
+        return now.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        ) + datetime.timedelta(days=1)
 
     async def _get_data(self, data, now):
         """Get data from Tibber."""
@@ -212,7 +260,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     minute=2, second=0, microsecond=0
                 )
             else:
-                next_update = (now + datetime.timedelta(minutes=2))
+                next_update = now + datetime.timedelta(minutes=2)
         elif consumption_yesterday_available:
             next_update = (now + datetime.timedelta(days=1)).replace(
                 hour=3, minute=0, second=0, microsecond=0
@@ -229,7 +277,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 continue
             month_consumption.add(Consumption(date, None, price, None))
 
-        self.hass.data[DOMAIN][f"month_consumption_{self.tibber_home.home_id}"] = month_consumption
+        self.hass.data[DOMAIN][
+            f"month_consumption_{self.tibber_home.home_id}"
+        ] = month_consumption
 
         if prices_tomorrow_available:
             next_update = min(
@@ -239,9 +289,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 ),
             )
         elif now.hour >= 13:
-            next_update = min(
-                next_update, now + datetime.timedelta(minutes=2)
-            )
+            next_update = min(next_update, now + datetime.timedelta(minutes=2))
         else:
             next_update = min(
                 next_update,
@@ -272,13 +320,18 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         data["est_subsidy"] = (_total_price / _n_price - 0.7 * 1.25) * 0.9
         data["customer_avg_price"] = total_cost / total_cons
 
-        data["daily_cost_with_subsidy"] = total_cost_day - data["est_subsidy"] * total_cons_day
-        data["monthly_cost_with_subsidy"] = total_cost - data["est_subsidy"] * total_cons
+        data["daily_cost_with_subsidy"] = (
+            total_cost_day - data["est_subsidy"] * total_cons_day
+        )
+        data["monthly_cost_with_subsidy"] = (
+            total_cost - data["est_subsidy"] * total_cons
+        )
         return next_update
 
 
 class Consumption:
     """Consumption data."""
+
     def __init__(self, timestamp, cons, price, cost):
         """Initialize the data."""
         self.timestamp = timestamp
@@ -317,5 +370,3 @@ class Consumption:
 
     def __repr__(self):
         return self.__str__()
-
-
