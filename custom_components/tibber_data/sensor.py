@@ -140,14 +140,12 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 self.coordinator.data.get(self.entity_description.key, {}).get(
                     dt_util.now().replace(minute=0, second=0, microsecond=0)
                 )
-                * 100
             )
         elif self.entity_description.key == "total_price_with_subsidy":
             grid_price = (
                 self.coordinator.data.get("grid_price", {}).get(
                     dt_util.now().replace(minute=0, second=0, microsecond=0)
                 )
-                * 100
             )
             price_data = self.coordinator.tibber_home.current_price_data()
             native_value = (
