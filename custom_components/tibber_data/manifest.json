@@ -6,7 +6,7 @@
     "after_dependencies": ["tibber"],
     "codeowners": ["@danielhiversen"],
     "issue_tracker": "https://github.com/Danielhiversen/home_assistant_tibber_data/issues",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "iot_class": "cloud_polling",
     "config_flow": false
 }
