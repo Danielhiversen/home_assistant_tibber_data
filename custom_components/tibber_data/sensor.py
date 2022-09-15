@@ -3,6 +3,7 @@ import asyncio
 import base64
 import datetime
 import logging
+from typing import cast
 
 import tibber
 from homeassistant.components.sensor import (
@@ -51,6 +52,18 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         name="Estimated price with subsidy",
         state_class=SensorStateClass.MEASUREMENT,
     ),
+    SensorEntityDescription(
+        key="daily_cost_with_subsidy",
+        name="Daily cost with subsidy",
+        device_class=SensorDeviceClass.MONETARY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="monthly_cost_with_subsidy",
+        name="Monthly cost with subsidy",
+        device_class=SensorDeviceClass.MONETARY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
 )
 
 
@@ -59,17 +72,17 @@ async def async_setup_platform(
 ):
     """Set up the Tibber sensor."""
     hass.data[DOMAIN] = {}
-    hass.data[
-        "tibber"
-    ].user_agent += " https://github.com/Danielhiversen/home_assistant_tibber_data"
     dev = []
     tasks = []
     for home in hass.data["tibber"].get_homes(only_active=True):
+        home = cast(tibber.TibberHome, home)
         if not home.info:
             await home.update_info()
         coordinator = TibberDataCoordinator(hass, home)
         tasks.append(coordinator.async_request_refresh())
         for entity_description in SENSORS:
+            if entity_description.key in ("daily_cost_with_subsidy", ) and not home.has_real_time_consumption:
+                continue
             dev.append(TibberDataSensor(coordinator, entity_description))
     async_add_entities(dev)
     await asyncio.gather(*tasks)
@@ -85,7 +98,10 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             f"{coordinator.tibber_home.home_id}_{entity_description.key}"
         )
         if entity_description.native_unit_of_measurement is None:
-            self._attr_native_unit_of_measurement = coordinator.tibber_home.price_unit
+            if entity_description.device_class == SensorDeviceClass.MONETARY:
+                self._attr_native_unit_of_measurement = coordinator.tibber_home.currency
+            else:
+                self._attr_native_unit_of_measurement = coordinator.tibber_home.price_unit
         self._attr_name = (
             f"{entity_description.name} {coordinator.tibber_home.address1}"
         )
@@ -139,6 +155,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         max_month = []
         cons_data = await get_historic_data(self.tibber_home, self.hass.data["tibber"])
         consumption_yesterday_available = False
+        consumption_today_available = False
         month_consumption = set()
 
         for _hour in cons_data:
@@ -150,6 +167,8 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 continue
             if date.date() == now.date() - datetime.timedelta(days=1):
                 consumption_yesterday_available = True
+            if date == now - datetime.timedelta(hours=1):
+                consumption_today_available = True
             cons = Consumption(date, _cons, _hour.get("unitPrice"), _hour.get("cost"))
             month_consumption.add(cons)
 
@@ -177,7 +196,14 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data["peak_consumption_attrs"] = None
         await self.tibber_home.update_price_info()
 
-        if consumption_yesterday_available:
+        if self.tibber_home.has_real_time_consumption:
+            if consumption_today_available:
+                self._next_update = (now + datetime.timedelta(hours=1)).replace(
+                    minute=2, second=0, microsecond=0
+                )
+            else:
+                self._next_update = (now + datetime.timedelta(minutes=2))
+        elif consumption_yesterday_available:
             self._next_update = (now + datetime.timedelta(days=1)).replace(
                 hour=3, minute=0, second=0, microsecond=0
             )
@@ -217,7 +243,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         total_price = 0
         n_price = 0
         total_cost = 0
+        total_cost_day = 0
         total_cons = 0
+        total_cons_day = 0
         for cons in month_consumption:
             _total_price += cons.price if cons.price else 0
             _n_price += 1 if cons.price else 0
@@ -227,9 +255,15 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             n_price += 1 if cons.price else 0
             total_cost += cons.cost
             total_cons += cons.cons
+            if cons.day == now.date():
+                total_cost_day += cons.cost
+                total_cons_day += cons.cons
         data["monthly_avg_price"] = total_price / n_price
         data["est_subsidy"] = (_total_price / _n_price - 0.7 * 1.25) * 0.9
         data["customer_avg_price"] = total_cost / total_cons
+
+        data["daily_cost_with_subsidy"] = total_cost_day - data["est_subsidy"] * total_cons_day
+        data["monthly_cost_with_subsidy"] = total_cost - data["est_subsidy"] * total_cons
 
 
 class Consumption:
