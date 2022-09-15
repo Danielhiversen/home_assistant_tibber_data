@@ -1,3 +1,4 @@
+"""Helpers for the Tibber integration."""
 import logging
 import base64
 import datetime
@@ -39,6 +40,6 @@ async def get_historic_data(tibber_home: tibber.TibberHome, tibber_controller: t
     return data["nodes"]
 
 
-async def login(tibber_controller: tibber.Tibber, password: str):
-    """Login to tibber."""
-    return ""
+# async def login(tibber_controller: tibber.Tibber, password: str):
+#     """Login to tibber."""
+#     return ""
