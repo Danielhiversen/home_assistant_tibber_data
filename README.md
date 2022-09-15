@@ -17,6 +17,9 @@ You get the following sensors:
 * Estimated subsidy
 * Estimated price with subsidy
 * Average of 3 highest hourly consumption (from 3 different days)
+* Monthly accumulated cost with subsidy
+* Daily accumulated cost with subsidy (only available if you have a real-time meter)
+
 
 
 ## Install
