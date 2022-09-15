@@ -67,6 +67,11 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
+        key="total_price_with_subsidy",
+        name="Estimated total price with subsidy and grid price",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
         key="grid_price",
         name="Grid price",
         state_class=SensorStateClass.MEASUREMENT,
@@ -93,7 +98,10 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
                 and not home.has_real_time_consumption
             ):
                 continue
-            if entity_description.key in ("grid_price",) and not config.get("password"):
+            if entity_description.key in (
+                "grid_price",
+                "total_price_with_subsidy",
+            ) and not config.get("password"):
                 continue
             dev.append(TibberDataSensor(coordinator, entity_description))
     async_add_entities(dev)
@@ -128,9 +136,23 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             price_data = self.coordinator.tibber_home.current_price_data()
             native_value = price_data[0] - self.coordinator.data.get("est_subsidy", 0)
         elif self.entity_description.key == "grid_price":
-            native_value = self.coordinator.data.get(
-                self.entity_description.key, {}
-            ).get(dt_util.now().replace(minute=0, second=0, microsecond=0))
+            native_value = (
+                self.coordinator.data.get(self.entity_description.key, {}).get(
+                    dt_util.now().replace(minute=0, second=0, microsecond=0)
+                )
+                * 100
+            )
+        elif self.entity_description.key == "total_price_with_subsidy":
+            grid_price = (
+                self.coordinator.data.get("grid_price", {}).get(
+                    dt_util.now().replace(minute=0, second=0, microsecond=0)
+                )
+                * 100
+            )
+            price_data = self.coordinator.tibber_home.current_price_data()
+            native_value = (
+                grid_price + price_data[0] - self.coordinator.data.get("est_subsidy", 0)
+            )
         else:
             native_value = self.coordinator.data.get(self.entity_description.key)
 
@@ -154,7 +176,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=f"Tibber Data {tibber_home.name}",
-            update_interval=datetime.timedelta(minutes=2),
+            update_interval=datetime.timedelta(seconds=15),
         )
         self.tibber_home: tibber.TibberHome = tibber_home
         self.email = email
