@@ -1,6 +1,5 @@
 """Tibber data"""
 import asyncio
-import base64
 import datetime
 import logging
 from typing import cast
@@ -19,6 +18,8 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 from homeassistant.util import dt as dt_util
+
+from .helpers import get_historic_data
 
 DOMAIN = "tibber_data"
 
@@ -64,11 +65,16 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.MONETARY,
         state_class=SensorStateClass.MEASUREMENT,
     ),
+    SensorEntityDescription(
+        key="grid_price",
+        name="Current grid price",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
 )
 
 
 async def async_setup_platform(
-    hass: HomeAssistant, _, async_add_entities, __=None
+    hass: HomeAssistant, _, async_add_entities, config
 ):
     """Set up the Tibber sensor."""
     hass.data[DOMAIN] = {}
@@ -78,10 +84,12 @@ async def async_setup_platform(
         home = cast(tibber.TibberHome, home)
         if not home.info:
             await home.update_info()
-        coordinator = TibberDataCoordinator(hass, home)
+        coordinator = TibberDataCoordinator(hass, home, config.get("password"))
         tasks.append(coordinator.async_request_refresh())
         for entity_description in SENSORS:
             if entity_description.key in ("daily_cost_with_subsidy", ) and not home.has_real_time_consumption:
+                continue
+            if entity_description.key in ("grid_price", ) and not config.get("password"):
                 continue
             dev.append(TibberDataSensor(coordinator, entity_description))
     async_add_entities(dev)
@@ -129,7 +137,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
 class TibberDataCoordinator(DataUpdateCoordinator):
     """Handle Tibber data."""
 
-    def __init__(self, hass, tibber_home: tibber.TibberHome):
+    def __init__(self, hass, tibber_home: tibber.TibberHome, password: str):
         """Initialize the data handler."""
         super().__init__(
             hass,
@@ -138,15 +146,17 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             update_interval=datetime.timedelta(minutes=2),
         )
         self.tibber_home: tibber.TibberHome = tibber_home
-        self._next_update = dt_util.now() - datetime.timedelta(minutes=1)
+        self._password = password
+        self._update_functions = {self._get_data: dt_util.now() - datetime.timedelta(minutes=1), }
 
     async def _async_update_data(self):
         """Update data via API."""
         now = dt_util.now(dt_util.DEFAULT_TIME_ZONE)
         data = {} if self.data is None else self.data
-        _LOGGER.debug("Updating Tibber data %s", self._next_update)
-        if now >= self._next_update:
-            await self._get_data(data, now)
+        for func, next_update in self._update_functions.copy().items():
+            _LOGGER.debug("Updating Tibber data %s", next_update)
+            if now >= next_update:
+                self._update_functions[func] = await func(data, now)
         return data
 
     async def _get_data(self, data, now):
@@ -198,17 +208,17 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
         if self.tibber_home.has_real_time_consumption:
             if consumption_today_available:
-                self._next_update = (now + datetime.timedelta(hours=1)).replace(
+                next_update = (now + datetime.timedelta(hours=1)).replace(
                     minute=2, second=0, microsecond=0
                 )
             else:
-                self._next_update = (now + datetime.timedelta(minutes=2))
+                next_update = (now + datetime.timedelta(minutes=2))
         elif consumption_yesterday_available:
-            self._next_update = (now + datetime.timedelta(days=1)).replace(
+            next_update = (now + datetime.timedelta(days=1)).replace(
                 hour=3, minute=0, second=0, microsecond=0
             )
         else:
-            self._next_update = now + datetime.timedelta(minutes=15)
+            next_update = now + datetime.timedelta(minutes=15)
 
         prices_tomorrow_available = False
         for key, price in self.tibber_home.price_total.items():
@@ -222,19 +232,19 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self.hass.data[DOMAIN][f"month_consumption_{self.tibber_home.home_id}"] = month_consumption
 
         if prices_tomorrow_available:
-            self._next_update = min(
-                self._next_update,
+            next_update = min(
+                next_update,
                 (now + datetime.timedelta(days=1)).replace(
                     hour=13, minute=0, second=0, microsecond=0
                 ),
             )
         elif now.hour >= 13:
-            self._next_update = min(
-                self._next_update, now + datetime.timedelta(minutes=2)
+            next_update = min(
+                next_update, now + datetime.timedelta(minutes=2)
             )
         else:
-            self._next_update = min(
-                self._next_update,
+            next_update = min(
+                next_update,
                 now.replace(hour=13, minute=1, second=0, microsecond=0),
             )
 
@@ -264,6 +274,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
         data["daily_cost_with_subsidy"] = total_cost_day - data["est_subsidy"] * total_cons_day
         data["monthly_cost_with_subsidy"] = total_cost - data["est_subsidy"] * total_cons
+        return next_update
 
 
 class Consumption:
@@ -308,33 +319,3 @@ class Consumption:
         return self.__str__()
 
 
-async def get_historic_data(tibber_home: tibber.TibberHome, tibber_controller: tibber.Tibber):
-    """Get historic data."""
-    # pylint: disable=consider-using-f-string
-    query = """
-            {{
-              viewer {{
-                home(id: "{0}") {{
-                  consumption(resolution: HOURLY, last: 744, before:"{1}") {{
-                    nodes {{
-                      consumption
-                      cost
-                      from
-                      unitPrice
-                    }}
-                  }}
-                }}
-              }}
-            }}
-      """.format(
-        tibber_home.home_id,
-        base64.b64encode(datetime.datetime.now().isoformat().encode('ascii')).decode(),
-    )
-
-    if not (data := await tibber_controller.execute(query)):
-        _LOGGER.error("Could not find the data.")
-        return None
-    data = data["viewer"]["home"]["consumption"]
-    if data is None:
-        return None
-    return data["nodes"]
