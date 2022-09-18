@@ -250,7 +250,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             cons = Consumption(date, _cons, _hour.get("unitPrice"), _hour.get("cost"))
             month_consumption.add(cons)
 
-            if len(max_month) == 0 or cons > max_month[-1]:
+            if len(max_month) < 3 or cons > max_month[-1]:
                 same_day = False
                 for k, _cons in enumerate(max_month):
                     if cons.day == _cons.day:
