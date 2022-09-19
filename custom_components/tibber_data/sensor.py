@@ -230,16 +230,15 @@ class TibberDataCoordinator(DataUpdateCoordinator):
     async def _get_data(self, data, now):
         """Get data from Tibber."""
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
-        max_month = []
         cons_data = await get_historic_data(self.tibber_home, self.hass.data["tibber"])
+
         consumption_yesterday_available = False
         consumption_today_available = False
         month_consumption = set()
+        max_month = []
 
         for _hour in cons_data:
             _cons = _hour.get("consumption")
-            if _cons is None:
-                continue
             date = dt_util.parse_datetime(_hour.get("from"))
             if not (date.month == now.month and date.year == now.year):
                 continue
@@ -272,7 +271,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         else:
             data["peak_consumption"] = None
             data["peak_consumption_attrs"] = None
-        await self.tibber_home.update_price_info()
 
         if self.tibber_home.has_real_time_consumption:
             if consumption_today_available:
@@ -288,6 +286,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         else:
             next_update = now + datetime.timedelta(minutes=15)
 
+        await self.tibber_home.update_price_info()
         prices_tomorrow_available = False
         for key, price in self.tibber_home.price_total.items():
             date = dt_util.parse_datetime(key)
@@ -296,6 +295,10 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             if not (date.month == now.month and date.year == now.year):
                 continue
             month_consumption.add(Consumption(date, None, price, None))
+
+        cons_data_sorted = sorted(list(month_consumption), key=lambda x: x.timestamp)
+        for _cons in cons_data_sorted:
+            _LOGGER.debug("Cons: %s", _cons)
 
         self.hass.data[DOMAIN][
             f"month_consumption_{self.tibber_home.home_id}"
