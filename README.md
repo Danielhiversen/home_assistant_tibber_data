@@ -20,7 +20,7 @@ You get the following sensors:
 * Monthly accumulated cost with subsidy
 * Daily accumulated cost with subsidy (only available if you have a real-time meter)
 
-Experimental and requires aditional configuration:
+Experimental and requires additional configuration:
 * Grid price (Only if your grid company is supported by Tibber)
 * Estimated total price with subsidy and grid price (Only if your grid company is supported by Tibber)
 
