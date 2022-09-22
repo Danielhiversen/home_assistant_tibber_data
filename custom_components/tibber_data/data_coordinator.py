@@ -12,7 +12,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
-from . import DOMAIN
+from .const import DOMAIN
 from .consumption_data import Consumption
 from .helpers import (
     get_historic_data,
