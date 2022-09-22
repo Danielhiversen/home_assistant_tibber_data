@@ -1,5 +1,8 @@
+"""constants for Tibber integration."""
+
 from homeassistant.components.sensor import SensorEntityDescription, SensorStateClass, SensorDeviceClass
 from homeassistant.const import ENERGY_KILO_WATT_HOUR
+
 DOMAIN = "tibber_data"
 
 SENSORS: tuple[SensorEntityDescription, ...] = (
