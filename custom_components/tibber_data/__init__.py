@@ -4,7 +4,7 @@ import logging
 from homeassistant.const import EVENT_HOMEASSISTANT_START
 from homeassistant.helpers import discovery
 
-DOMAIN = "tibber_data"
+from .const import DOMAIN
 
 DEPENDENCIES = ["tibber"]
 
