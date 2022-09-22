@@ -18,7 +18,9 @@ You get the following sensors:
 * Estimated price with subsidy
 * Average of 3 highest hourly consumption (from 3 different days)
 * Monthly accumulated cost with subsidy
-* Daily accumulated cost with subsidy (only available if you have a real-time meter)
+* Daily accumulated cost with subsidy (only available if you have a real-time meter, Tibber Pulse)
+* Monthly production profit
+* Daily production profit (only available if you have a real-time meter, Tibber Pulse)
 
 Experimental and requires additional configuration:
 * Grid price (Only if your grid company is supported by Tibber)

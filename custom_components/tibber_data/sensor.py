@@ -20,7 +20,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.util import dt as dt_util
 
-from .helpers import get_historic_data, get_tibber_data, get_tibber_token
+from .helpers import get_historic_data, get_tibber_data, get_tibber_token, get_historic_production_data
 
 DOMAIN = "tibber_data"
 
@@ -66,6 +66,18 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.MONETARY,
         state_class=SensorStateClass.MEASUREMENT,
     ),
+    SensorEntityDescription(
+        key="production_profit_day",
+        name="Daily production profit",
+        device_class=SensorDeviceClass.MONETARY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="production_profit_month",
+        name="Monthly production profit",
+        device_class=SensorDeviceClass.MONETARY,
+        state_class=SensorStateClass.MEASUREMENT,
+    )
 )
 TIBBER_APP_SENSORS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
@@ -100,6 +112,19 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
                 and not home.has_real_time_consumption
             ):
                 continue
+
+            if (
+                entity_description.key in ("production_profit_month",)
+                and not home.has_production
+            ):
+                continue
+
+            if (
+                entity_description.key in ("production_profit_day",)
+                and (not home.has_production or not home.has_real_time_consumption)
+            ):
+                continue
+
             dev.append(TibberDataSensor(coordinator, entity_description))
 
         if config.get("password"):
@@ -187,6 +212,8 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         }
         if self._password:
             self._update_functions[self._get_data_tibber] = _next_update
+        if self.tibber_home.has_production:
+            self._update_functions[self._get_production_data] = _next_update
 
     async def _async_update_data(self):
         """Update data via API."""
@@ -227,6 +254,48 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         return now.replace(
             hour=0, minute=0, second=0, microsecond=0
         ) + datetime.timedelta(days=1)
+
+    async def _get_production_data(self, data, now):
+        """Get prodution data from Tibber."""
+        # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+        prod_data = await get_historic_production_data(self.tibber_home, self.hass.data["tibber"])
+
+        production_yesterday_available = False
+        production_prev_hour_available = False
+        production_profit_month = 0
+        production_profit_day = 0
+
+        for _hour in prod_data:
+            _profit = _hour.get("profit")
+            date = dt_util.parse_datetime(_hour.get("from"))
+            if not (date.month == now.month and date.year == now.year):
+                continue
+            if _profit is None:
+                continue
+            if date.date() == now.date() - datetime.timedelta(days=1):
+                production_yesterday_available = True
+            if date == now - datetime.timedelta(hours=1):
+                production_prev_hour_available = True
+            production_profit_month += _profit
+            if date.date() == now.date():
+                production_profit_day += _profit
+
+        if self.tibber_home.has_real_time_consumption:
+            if production_prev_hour_available:
+                next_update = (now + datetime.timedelta(hours=1)).replace(
+                    minute=2, second=0, microsecond=0
+                )
+            else:
+                next_update = now + datetime.timedelta(minutes=2)
+        elif production_yesterday_available:
+            next_update = (now + datetime.timedelta(days=1)).replace(
+                hour=3, minute=0, second=0, microsecond=0
+            )
+        else:
+            next_update = now + datetime.timedelta(minutes=15)
+        data["production_profit_month"] = production_profit_month
+        data["production_profit_day"] = production_profit_day
+        return next_update
 
     async def _get_data(self, data, now):
         """Get data from Tibber."""
