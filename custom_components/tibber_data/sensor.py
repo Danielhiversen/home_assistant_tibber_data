@@ -1,11 +1,16 @@
 """Tibber data"""
-import asyncio
 import datetime
 import logging
 from typing import cast
 
 import tibber
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntityDescription,
+    SensorEntity,
+    SensorStateClass,
+)
+from homeassistant.const import ENERGY_KILO_WATT_HOUR
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import (
@@ -20,6 +25,8 @@ from .helpers import (
     get_historic_production_data,
     get_tibber_data,
     get_tibber_token,
+    get_tibber_chargers,
+    get_tibber_chargers_data,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,7 +36,6 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
     """Set up the Tibber sensor."""
     hass.data[DOMAIN] = {}
     dev = []
-    tasks = []
     for home in hass.data["tibber"].get_homes(only_active=True):
         home = cast(tibber.TibberHome, home)
         if not home.info:
@@ -37,7 +43,7 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
         coordinator = TibberDataCoordinator(
             hass, home, config.get("email"), config.get("password")
         )
-        tasks.append(coordinator.async_request_refresh())
+        await coordinator.async_request_refresh()
         for entity_description in SENSORS:
             if (
                 entity_description.key in ("daily_cost_with_subsidy",)
@@ -61,8 +67,37 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
         if config.get("password"):
             for entity_description in TIBBER_APP_SENSORS:
                 dev.append(TibberDataSensor(coordinator, entity_description))
+            for charger in coordinator.chargers:
+                entity_description = SensorEntityDescription(
+                    key=f"charger_{charger}_cost_day",
+                    name="Charger cost day",
+                    device_class=SensorDeviceClass.MONETARY,
+                    state_class=SensorStateClass.MEASUREMENT,
+                )
+                dev.append(TibberDataSensor(coordinator, entity_description))
+                entity_description = SensorEntityDescription(
+                    key=f"charger_{charger}_cost_month",
+                    name="Charger cost month",
+                    device_class=SensorDeviceClass.MONETARY,
+                    state_class=SensorStateClass.MEASUREMENT,
+                )
+                dev.append(TibberDataSensor(coordinator, entity_description))
+                entity_description = SensorEntityDescription(
+                    key=f"charger_{charger}_consumption_month",
+                    name="Charger consumption month",
+                    device_class=SensorDeviceClass.ENERGY,
+                    native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+                )
+                dev.append(TibberDataSensor(coordinator, entity_description))
+                entity_description = SensorEntityDescription(
+                    key=f"charger_{charger}_consumption_day",
+                    name="Charger consumption day",
+                    device_class=SensorDeviceClass.ENERGY,
+                    native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+                )
+                dev.append(TibberDataSensor(coordinator, entity_description))
+
     async_add_entities(dev)
-    await asyncio.gather(*tasks)
 
 
 class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"]):
@@ -82,9 +117,15 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 self._attr_native_unit_of_measurement = (
                     coordinator.tibber_home.price_unit
                 )
-        self._attr_name = (
-            f"{entity_description.name} {coordinator.tibber_home.address1}"
-        )
+
+    @property
+    def _attr_name(self):
+        """Return the name of the sensor."""
+        if f"{self.entity_description.key}_name" in self.coordinator.data:
+            return self.coordinator.data[
+                f"{self.entity_description.key}_name"
+            ]
+        return f"{self.entity_description.name} {self.coordinator.tibber_home.address1}"
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -133,12 +174,15 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self.email = email
         self._password = password
         self._token = None
+        self.chargers = []
+
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
         self._update_functions = {
             self._get_data: _next_update,
         }
         if self._password:
             self._update_functions[self._get_data_tibber] = _next_update
+            self._update_functions[self._get_charger_data_tibber] = _next_update
         if self.tibber_home.has_production:
             self._update_functions[self._get_production_data] = _next_update
 
@@ -181,6 +225,73 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         return now.replace(
             hour=0, minute=0, second=0, microsecond=0
         ) + datetime.timedelta(days=1)
+
+    async def _get_charger_data_tibber(self, data, now):
+        """Update charger data via Tibber API."""
+        session = async_get_clientsession(self.hass)
+        if self._token is None:
+            self._token = await get_tibber_token(session, self.email, self._password)
+            if self._token is None:
+                return now + datetime.timedelta(minutes=2)
+
+        try:
+            self.chargers = await get_tibber_chargers(
+                session, self._token, self.tibber_home.home_id
+            )
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Error fetching Tibber charger data")
+            self._token = None
+            return now + datetime.timedelta(minutes=2)
+
+        if not self.chargers:
+            return now + datetime.timedelta(hours=2)
+
+        for charger in self.chargers:
+            charger_data = await get_tibber_chargers_data(
+                session,
+                self._token,
+                self.tibber_home.home_id,
+                charger,
+            )
+            charging_cost_day = 0
+            charging_consumption_day = 0
+            charging_cost_month = 0
+            charging_consumption_month = 0
+            for _hour in charger_data["charger_consumption"]:
+                print(_hour)
+                _cost = _hour.get("energyCost")
+                _cons = _hour.get("consumption")
+                date = dt_util.parse_datetime(_hour.get("from"))
+                if not (date.month == now.month and date.year == now.year):
+                    continue
+                if _cost is not None:
+                    charging_cost_month += _cost
+                    if date.date() == now.date():
+                        charging_cost_day += _cost
+                if _cons is not None:
+                    charging_consumption_month += _cons
+                    if date.date() == now.date():
+                        charging_consumption_day += _cons
+            data[f"charger_{charger}_cost_day"] = charging_cost_day
+            data[f"charger_{charger}_cost_month"] = charging_cost_month
+            data[f"charger_{charger}_consumption_day"] = charging_consumption_day
+            data[f"charger_{charger}_consumption_month"] = charging_consumption_month
+            data[
+                f"charger_{charger}_cost_day_name"
+            ] = f"{charger_data['meta_data']['name']} cost day"
+            data[
+                f"charger_{charger}_cost_month_name"
+            ] = f"{charger_data['meta_data']['name']} cost month"
+            data[
+                f"charger_{charger}_consumption_day_name"
+            ] = f"{charger_data['meta_data']['name']} consumption day"
+            data[
+                f"charger_{charger}_consumption_month_name"
+            ] = f"{charger_data['meta_data']['name']} consumption month"
+
+        return now.replace(minute=0, second=10, microsecond=0) + datetime.timedelta(
+            hours=1
+        )
 
     async def _get_production_data(self, data, now):
         """Get prodution data from Tibber."""
