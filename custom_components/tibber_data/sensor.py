@@ -233,7 +233,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         cons_data = await get_historic_data(self.tibber_home, self.hass.data["tibber"])
 
         consumption_yesterday_available = False
-        consumption_today_available = False
+        consumption_prev_hour_available = False
         month_consumption = set()
         max_month = []
 
@@ -242,10 +242,11 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             date = dt_util.parse_datetime(_hour.get("from"))
             if not (date.month == now.month and date.year == now.year):
                 continue
-            if date.date() == now.date() - datetime.timedelta(days=1):
-                consumption_yesterday_available = True
-            if date == now - datetime.timedelta(hours=1):
-                consumption_today_available = True
+            if _cons is not None:
+                if date.date() == now.date() - datetime.timedelta(days=1):
+                    consumption_yesterday_available = True
+                if date == now - datetime.timedelta(hours=1):
+                    consumption_prev_hour_available = True
             cons = Consumption(date, _cons, _hour.get("unitPrice"), _hour.get("cost"))
             month_consumption.add(cons)
 
@@ -273,7 +274,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data["peak_consumption_attrs"] = None
 
         if self.tibber_home.has_real_time_consumption:
-            if consumption_today_available:
+            if consumption_prev_hour_available:
                 next_update = (now + datetime.timedelta(hours=1)).replace(
                     minute=2, second=0, microsecond=0
                 )
