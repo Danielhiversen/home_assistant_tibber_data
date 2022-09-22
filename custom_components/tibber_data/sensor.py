@@ -5,10 +5,7 @@ import logging
 from typing import cast
 
 import tibber
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-)
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import (
@@ -18,8 +15,12 @@ from homeassistant.helpers.update_coordinator import (
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, SENSORS, TIBBER_APP_SENSORS
-from .helpers import get_historic_data, get_tibber_data, get_tibber_token, get_historic_production_data
-
+from .helpers import (
+    get_historic_data,
+    get_historic_production_data,
+    get_tibber_data,
+    get_tibber_token,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,9 +51,8 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
             ):
                 continue
 
-            if (
-                entity_description.key in ("production_profit_day",)
-                and (not home.has_production or not home.has_real_time_consumption)
+            if entity_description.key in ("production_profit_day",) and (
+                not home.has_production or not home.has_real_time_consumption
             ):
                 continue
 
@@ -93,16 +93,12 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             price_data = self.coordinator.tibber_home.current_price_data()
             native_value = price_data[0] - self.coordinator.data.get("est_subsidy", 0)
         elif self.entity_description.key == "grid_price":
-            native_value = (
-                self.coordinator.data.get(self.entity_description.key, {}).get(
-                    dt_util.now().replace(minute=0, second=0, microsecond=0)
-                )
-            )
+            native_value = self.coordinator.data.get(
+                self.entity_description.key, {}
+            ).get(dt_util.now().replace(minute=0, second=0, microsecond=0))
         elif self.entity_description.key == "total_price_with_subsidy":
-            grid_price = (
-                self.coordinator.data.get("grid_price", {}).get(
-                    dt_util.now().replace(minute=0, second=0, microsecond=0)
-                )
+            grid_price = self.coordinator.data.get("grid_price", {}).get(
+                dt_util.now().replace(minute=0, second=0, microsecond=0)
             )
             price_data = self.coordinator.tibber_home.current_price_data()
             native_value = (
@@ -189,7 +185,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
     async def _get_production_data(self, data, now):
         """Get prodution data from Tibber."""
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
-        prod_data = await get_historic_production_data(self.tibber_home, self.hass.data["tibber"])
+        prod_data = await get_historic_production_data(
+            self.tibber_home, self.hass.data["tibber"]
+        )
 
         production_yesterday_available = False
         production_prev_hour_available = False
