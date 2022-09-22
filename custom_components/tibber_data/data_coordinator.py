@@ -41,7 +41,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self.email = email
         self._password = password
         self._token = None
-        self._chargers: [str] = []
+        self._chargers = []
 
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
         self._update_functions = {
