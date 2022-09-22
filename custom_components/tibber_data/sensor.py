@@ -66,6 +66,8 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.MONETARY,
         state_class=SensorStateClass.MEASUREMENT,
     ),
+)
+TIBBER_APP_SENSORS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="total_price_with_subsidy",
         name="Estimated total price with subsidy and grid price",
@@ -98,12 +100,11 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
                 and not home.has_real_time_consumption
             ):
                 continue
-            if entity_description.key in (
-                "grid_price",
-                "total_price_with_subsidy",
-            ) and not config.get("password"):
-                continue
             dev.append(TibberDataSensor(coordinator, entity_description))
+
+        if config.get("password"):
+            for entity_description in TIBBER_APP_SENSORS:
+                dev.append(TibberDataSensor(coordinator, entity_description))
     async_add_entities(dev)
     await asyncio.gather(*tasks)
 
