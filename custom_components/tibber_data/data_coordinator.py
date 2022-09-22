@@ -1,5 +1,6 @@
 import datetime
 import logging
+from typing import List
 
 import tibber
 from homeassistant.components.sensor import (
@@ -41,7 +42,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self.email = email
         self._password = password
         self._token = None
-        self._chargers = []
+        self._chargers: List[str] = []
 
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
         self._update_functions = {
