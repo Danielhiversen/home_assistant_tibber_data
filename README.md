@@ -20,6 +20,10 @@ You get the following sensors:
 * Monthly accumulated cost with subsidy
 * Daily accumulated cost with subsidy (only available if you have a real-time meter)
 
+Experimental and requires additional configuration:
+* Grid price (Only if your grid company is supported by Tibber)
+* Estimated total price with subsidy and grid price (Only if your grid company is supported by Tibber)
+
 
 
 ## Install
@@ -37,6 +41,14 @@ In configuration.yaml:
 tibber_data:
 ```
 
+
+Optional for extra sensors:
+
+```
+tibber_data:
+  email: Your email registred at Tibber
+  password: Your tibber password
+```
 
 [releases]: https://github.com/Danielhiversen/home_assistant_tibber_data/releases
 [releases-shield]: https://img.shields.io/github/release/Danielhiversen/home_assistant_tibber_data.svg?style=popout
