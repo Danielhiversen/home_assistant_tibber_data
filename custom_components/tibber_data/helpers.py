@@ -154,6 +154,7 @@ async def get_tibber_chargers_data(
     resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
     meta_data = (await resp.json())["data"]["me"]["home"]["evCharger"]
 
+    # pylint: disable=consider-using-f-string
     post_args = {
         "headers": {"content-type": "application/json", "cookie": f"token={token}"},
         "data": json.dumps(

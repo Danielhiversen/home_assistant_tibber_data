@@ -1,3 +1,4 @@
+"""Consumption data for Tibber."""
 from homeassistant.util import dt as dt_util
 
 

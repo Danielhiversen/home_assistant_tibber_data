@@ -1,3 +1,4 @@
+"""Data coordinator for Tibber."""
 import datetime
 import logging
 from typing import List
@@ -160,7 +161,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         print("chargers updated", self._chargers)
 
         return now.replace(minute=0, second=10, microsecond=0) + datetime.timedelta(
-            hours=1
+            minutes=1
         )
 
     async def _get_production_data(self, data, now):
@@ -334,6 +335,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
     @property
     def chargers_entity_descriptions(self):
+        """Return the entity descriptions for the chargers."""
         entity_descriptions = []
         for charger in self._chargers:
             entity_descriptions.append(
