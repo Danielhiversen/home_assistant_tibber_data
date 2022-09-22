@@ -67,35 +67,10 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
         if config.get("password"):
             for entity_description in TIBBER_APP_SENSORS:
                 dev.append(TibberDataSensor(coordinator, entity_description))
-            for charger in coordinator.chargers:
-                entity_description = SensorEntityDescription(
-                    key=f"charger_{charger}_cost_day",
-                    name="Charger cost day",
-                    device_class=SensorDeviceClass.MONETARY,
-                    state_class=SensorStateClass.MEASUREMENT,
-                )
-                dev.append(TibberDataSensor(coordinator, entity_description))
-                entity_description = SensorEntityDescription(
-                    key=f"charger_{charger}_cost_month",
-                    name="Charger cost month",
-                    device_class=SensorDeviceClass.MONETARY,
-                    state_class=SensorStateClass.MEASUREMENT,
-                )
-                dev.append(TibberDataSensor(coordinator, entity_description))
-                entity_description = SensorEntityDescription(
-                    key=f"charger_{charger}_consumption_month",
-                    name="Charger consumption month",
-                    device_class=SensorDeviceClass.ENERGY,
-                    native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
-                )
-                dev.append(TibberDataSensor(coordinator, entity_description))
-                entity_description = SensorEntityDescription(
-                    key=f"charger_{charger}_consumption_day",
-                    name="Charger consumption day",
-                    device_class=SensorDeviceClass.ENERGY,
-                    native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
-                )
-                dev.append(TibberDataSensor(coordinator, entity_description))
+            for (
+                chargers_entity_descritpions
+            ) in coordinator.chargers_entity_descriptions:
+                dev.append(TibberDataSensor(coordinator, chargers_entity_descritpions))
 
     async_add_entities(dev)
 
@@ -121,10 +96,9 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
     @property
     def _attr_name(self):
         """Return the name of the sensor."""
-        if f"{self.entity_description.key}_name" in self.coordinator.data:
-            return self.coordinator.data[
-                f"{self.entity_description.key}_name"
-            ]
+        _name = self.coordinator.data.get(f"{self.entity_description.key}_name")
+        if _name:
+            return _name
         return f"{self.entity_description.name} {self.coordinator.tibber_home.address1}"
 
     @callback
@@ -174,7 +148,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self.email = email
         self._password = password
         self._token = None
-        self.chargers: [str] = []
+        self._chargers: [str] = []
 
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
         self._update_functions = {
@@ -235,7 +209,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 return now + datetime.timedelta(minutes=2)
 
         try:
-            self.chargers = await get_tibber_chargers(
+            self._chargers = await get_tibber_chargers(
                 session, self._token, self.tibber_home.home_id
             )
         except Exception:  # pylint: disable=broad-except
@@ -243,10 +217,10 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             self._token = None
             return now + datetime.timedelta(minutes=2)
 
-        if not self.chargers:
+        if not self._chargers:
             return now + datetime.timedelta(hours=2)
 
-        for charger in self.chargers:
+        for charger in self._chargers:
             charger_data = await get_tibber_chargers_data(
                 session,
                 self._token,
@@ -287,9 +261,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[
                 f"charger_{charger}_consumption_month_name"
             ] = f"{charger_data['meta_data']['name']} consumption month"
+            print(charger_data["meta_data"])
 
-
-        print("chargers updated", self.chargers)
+        print("chargers updated", self._chargers)
 
         return now.replace(minute=0, second=10, microsecond=0) + datetime.timedelta(
             hours=1
@@ -463,6 +437,44 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             total_cost - data["est_subsidy"] * total_cons
         )
         return next_update
+
+    @property
+    def chargers_entity_descriptions(self):
+        entity_descriptions = []
+        for charger in self._chargers:
+            entity_descriptions.append(
+                SensorEntityDescription(
+                    key=f"charger_{charger}_cost_day",
+                    name="Charger cost day",
+                    device_class=SensorDeviceClass.MONETARY,
+                    state_class=SensorStateClass.MEASUREMENT,
+                )
+            )
+            entity_descriptions.append(
+                SensorEntityDescription(
+                    key=f"charger_{charger}_cost_month",
+                    name="Charger cost month",
+                    device_class=SensorDeviceClass.MONETARY,
+                    state_class=SensorStateClass.MEASUREMENT,
+                )
+            )
+            entity_descriptions.append(
+                SensorEntityDescription(
+                    key=f"charger_{charger}_consumption_month",
+                    name="Charger consumption month",
+                    device_class=SensorDeviceClass.ENERGY,
+                    native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+                )
+            )
+            entity_descriptions.append(
+                SensorEntityDescription(
+                    key=f"charger_{charger}_consumption_day",
+                    name="Charger consumption day",
+                    device_class=SensorDeviceClass.ENERGY,
+                    native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+                )
+            )
+            return entity_descriptions
 
 
 class Consumption:
