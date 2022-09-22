@@ -174,7 +174,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self.email = email
         self._password = password
         self._token = None
-        self.chargers = []
+        self.chargers: [str] = []
 
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
         self._update_functions = {
@@ -258,7 +258,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             charging_cost_month = 0
             charging_consumption_month = 0
             for _hour in charger_data["charger_consumption"]:
-                print(_hour)
                 _cost = _hour.get("energyCost")
                 _cons = _hour.get("consumption")
                 date = dt_util.parse_datetime(_hour.get("from"))
@@ -288,6 +287,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[
                 f"charger_{charger}_consumption_month_name"
             ] = f"{charger_data['meta_data']['name']} consumption month"
+
+
+        print("chargers updated", self.chargers)
 
         return now.replace(minute=0, second=10, microsecond=0) + datetime.timedelta(
             hours=1
