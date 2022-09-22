@@ -1,5 +1,5 @@
 # Tibber Data :zap: 
-![Validate with hassfest](https://github.com/Danielhiversen/home_assistant_tibber_custom/workflows/Validate%20with%20hassfest/badge.svg)
+![Validate with hassfest](https://github.com/Danielhiversen/home_assistant_tibber_data/workflows/Validate%20with%20hassfest/badge.svg)
 [![GitHub Release][releases-shield]][releases]
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 
@@ -25,6 +25,10 @@ You get the following sensors:
 Experimental and requires additional configuration:
 * Grid price (Only if your grid company is supported by Tibber)
 * Estimated total price with subsidy and grid price (Only if your grid company is supported by Tibber)
+* Charger cost day (Requires a connected charger, like Easee or Zaptec)
+* Charger cost month (Requires a connected charger, like Easee or Zaptec)
+* Charger consumption day (Requires a connected charger, like Easee or Zaptec)
+* Charger consumption month (Requires a connected charger, like Easee or Zaptec)
 
 
 
@@ -49,7 +53,7 @@ Optional for extra sensors:
 ```
 tibber_data:
   email: Your email registred at Tibber
-  password: Your tibber password
+  password: Your Tibber password
 ```
 
 [releases]: https://github.com/Danielhiversen/home_assistant_tibber_data/releases

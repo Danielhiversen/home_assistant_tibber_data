@@ -353,16 +353,16 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             )
             entity_descriptions.append(
                 SensorEntityDescription(
-                    key=f"charger_{charger}_consumption_month",
-                    name="Charger consumption month",
+                    key=f"charger_{charger}_consumption_day",
+                    name="Charger consumption day",
                     device_class=SensorDeviceClass.ENERGY,
                     native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
                 )
             )
             entity_descriptions.append(
                 SensorEntityDescription(
-                    key=f"charger_{charger}_consumption_day",
-                    name="Charger consumption day",
+                    key=f"charger_{charger}_consumption_month",
+                    name="Charger consumption month",
                     device_class=SensorDeviceClass.ENERGY,
                     native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
                 )
