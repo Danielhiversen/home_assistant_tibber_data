@@ -108,3 +108,73 @@ async def get_tibber_data(session, token: str):
     }
     resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
     return await resp.json()
+
+
+async def get_tibber_chargers(session, token: str, home_id: str):
+    """Get tibber device data."""
+    post_args = {
+        "headers": {"content-type": "application/json", "cookie": f"token={token}"},
+        "data": json.dumps(
+            {
+                "variables": {},
+                "query": '{ me { home(id: "' + home_id + '"){ bubbles{ type id } } } }',
+            }
+        ),
+    }
+
+    resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
+    res = []
+    for bubble in (await resp.json())["data"]["me"]["home"]["bubbles"]:
+        if bubble["type"] == "ev-charger":
+            res.append(bubble["id"])
+    return res
+
+
+async def get_tibber_chargers_data(
+    session,
+    token: str,
+    home_id: str,
+    charger_id: str,
+):
+    """Get tibber device data."""
+    now = datetime.datetime.now()
+    post_args = {
+        "headers": {"content-type": "application/json", "cookie": f"token={token}"},
+        "data": json.dumps(
+            {
+                "variables": {},
+                "query": '{ me { home(id: "'
+                + home_id
+                + '") { evCharger( id: "'
+                + charger_id
+                + '" ) { name lastSeen  state { cableIsLocked isCharging permanentCableLock }} } } }',
+            }
+        ),
+    }
+    resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
+    meta_data = (await resp.json())["data"]["me"]["home"]["evCharger"]
+
+    # pylint: disable=consider-using-f-string
+    post_args = {
+        "headers": {"content-type": "application/json", "cookie": f"token={token}"},
+        "data": json.dumps(
+            {
+                "variables": {},
+                "query": '{ me { home(id: "'
+                + home_id
+                + '") { evChargerConsumption( id: "'
+                + charger_id
+                + '" resolution: "DAILY" from: "'
+                + str(now.year)
+                + "-"
+                + "{:02d}".format(now.month)
+                + '-01T00:00:00+0200" ) { from consumption energyCost } } } }',
+            }
+        ),
+    }
+    resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
+    charger_consumption = (await resp.json())["data"]["me"]["home"][
+        "evChargerConsumption"
+    ]
+
+    return {"meta_data": meta_data, "charger_consumption": charger_consumption}
