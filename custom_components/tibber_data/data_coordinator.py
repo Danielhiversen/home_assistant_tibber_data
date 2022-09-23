@@ -156,12 +156,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[
                 f"charger_{charger}_consumption_month_name"
             ] = f"{charger_data['meta_data']['name']} consumption month"
-            print(charger_data["meta_data"])
 
-        print("chargers updated", self._chargers)
-
-        return now.replace(minute=0, second=10, microsecond=0) + datetime.timedelta(
-            minutes=1
+        return now.replace(minute=1, second=1, microsecond=0) + datetime.timedelta(
+            hours=1
         )
 
     async def _get_production_data(self, data, now):
