@@ -1,7 +1,7 @@
 """Data coordinator for Tibber."""
 import datetime
 import logging
-from typing import List
+from typing import List, Set
 
 import tibber
 from homeassistant.components.sensor import (
@@ -44,6 +44,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self._password = password
         self._token = None
         self._chargers: List[str] = []
+        self._month_consumption: Set[Consumption] = set()
 
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
         self._update_functions = {
@@ -54,6 +55,13 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             self._update_functions[self._get_charger_data_tibber] = _next_update
         if self.tibber_home.has_production:
             self._update_functions[self._get_production_data] = _next_update
+
+    def get_price_at(self, dt: datetime.datetime):
+        """Get price at a specific time."""
+        dt = dt.replace(minute=0, second=0, microsecond=0)
+        for consumption in self._month_consumption:
+            if dt_util.as_local(consumption.timestamp) == dt_util.as_local(dt):
+                return consumption.price
 
     async def _async_update_data(self):
         """Update data via API."""
@@ -282,6 +290,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self.hass.data[DOMAIN][
             f"month_consumption_{self.tibber_home.home_id}"
         ] = month_consumption
+        self._month_consumption = month_consumption
 
         if prices_tomorrow_available:
             next_update = min(
