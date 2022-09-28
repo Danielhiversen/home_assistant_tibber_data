@@ -60,7 +60,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         """Get price at a specific time."""
         timestamp = timestamp.replace(minute=0, second=0, microsecond=0)
         for consumption in self._month_consumption:
-            if dt_util.as_local(consumption.timestamp) == dt_util.as_local(dt):
+            if dt_util.as_local(consumption.timestamp) == dt_util.as_local(timestamp):
                 return consumption.price
         return None
 
