@@ -125,6 +125,7 @@ async def get_tibber_chargers(session, token: str, home_id: str):
     resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
     res = []
     for bubble in (await resp.json())["data"]["me"]["home"]["bubbles"]:
+        _LOGGER.debug("Found device: %s", bubble)
         if bubble["type"] == "ev-charger":
             res.append(bubble["id"])
     return res
