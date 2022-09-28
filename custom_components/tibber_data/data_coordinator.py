@@ -56,12 +56,13 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         if self.tibber_home.has_production:
             self._update_functions[self._get_production_data] = _next_update
 
-    def get_price_at(self, dt: datetime.datetime):
+    def get_price_at(self, timestamp: datetime.datetime):
         """Get price at a specific time."""
-        dt = dt.replace(minute=0, second=0, microsecond=0)
+        timestamp = timestamp.replace(minute=0, second=0, microsecond=0)
         for consumption in self._month_consumption:
             if dt_util.as_local(consumption.timestamp) == dt_util.as_local(dt):
                 return consumption.price
+        return None
 
     async def _async_update_data(self):
         """Update data via API."""
