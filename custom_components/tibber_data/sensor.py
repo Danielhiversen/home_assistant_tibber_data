@@ -49,10 +49,12 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
         if config.get("password"):
             for entity_description in TIBBER_APP_SENSORS:
                 dev.append(TibberDataSensor(coordinator, entity_description))
-            for (
-                chargers_entity_descritpions
-            ) in coordinator.chargers_entity_descriptions:
-                dev.append(TibberDataSensor(coordinator, chargers_entity_descritpions))
+            if coordinator.chargers_entity_descriptions:
+                for (
+                    chargers_entity_descriptions
+                ) in coordinator.chargers_entity_descriptions:
+                    dev.append(TibberDataSensor(coordinator, chargers_entity_descriptions))
+
 
     async_add_entities(dev)
 
