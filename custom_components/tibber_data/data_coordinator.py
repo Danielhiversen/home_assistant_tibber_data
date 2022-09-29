@@ -377,4 +377,4 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
                 )
             )
-            return entity_descriptions
+        return entity_descriptions
