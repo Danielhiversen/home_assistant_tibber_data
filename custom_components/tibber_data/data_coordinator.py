@@ -71,7 +71,11 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         for func, next_update in self._update_functions.copy().items():
             _LOGGER.debug("Updating Tibber data %s", next_update)
             if now >= next_update:
-                self._update_functions[func] = await func(data, now)
+                try:
+                    self._update_functions[func] = await func(data, now)
+                except Exception:  # pylint: disable=broad-except
+                    _LOGGER.exception("Error fetching Tibber data")
+                    self._update_functions[func] = now + datetime.timedelta(minutes=2)
         return data
 
     async def _get_data_tibber(self, data, now):
