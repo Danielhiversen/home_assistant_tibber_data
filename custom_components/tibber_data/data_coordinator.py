@@ -175,7 +175,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         )
 
     async def _get_production_data(self, data, now):
-        """Get prodution data from Tibber."""
+        """Get production data from Tibber."""
         # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         prod_data = await get_historic_production_data(
             self.tibber_home, self.hass.data["tibber"]
@@ -254,7 +254,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 max_month.sort(reverse=True)
                 if len(max_month) > 3:
                     del max_month[-1]
-        if max_month:
+        if max_month and sum(max_month) is not None:
             data["peak_consumption"] = sum(max_month) / len(max_month)
             data["peak_consumption_attrs"] = {
                 "peak_consumption_dates": [x.timestamp for x in max_month],
@@ -332,16 +332,16 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             if cons.day == now.date():
                 total_cost_day += cons.cost
                 total_cons_day += cons.cons
-        data["monthly_avg_price"] = total_price / n_price
-        data["est_subsidy"] = (_total_price / _n_price - 0.7 * 1.25) * 0.9
-        data["customer_avg_price"] = total_cost / total_cons
+        data["monthly_avg_price"] = total_price / n_price if n_price > 0 else None
+        data["est_subsidy"] = (_total_price / _n_price - 0.7 * 1.25) * 0.9 if _n_price > 0 else None
+        data["customer_avg_price"] = total_cost / total_cons if total_cons > 0 else None
 
         data["daily_cost_with_subsidy"] = (
             total_cost_day - data["est_subsidy"] * total_cons_day
-        )
+        ) if (data["est_subsidy"] is not None and total_cost_day is not None )else None
         data["monthly_cost_with_subsidy"] = (
             total_cost - data["est_subsidy"] * total_cons
-        )
+        ) if (data["est_subsidy"] is not None and total_cost is not None) else None
         return next_update
 
     @property
