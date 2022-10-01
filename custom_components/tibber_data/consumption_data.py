@@ -33,6 +33,8 @@ class Consumption:
         return hash(self.timestamp)
 
     def __radd__(self, other):
+        if self.cons is None:
+            return None
         return other + self.cons
 
     def __str__(self):

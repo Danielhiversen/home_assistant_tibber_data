@@ -88,19 +88,25 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
         """Handle updated data from the coordinator."""
         if self.entity_description.key == "est_current_price_with_subsidy":
             price = self.coordinator.get_price_at(dt_util.now())
-            native_value = price - self.coordinator.data.get("est_subsidy", 0)
+            if self.coordinator.data.get("est_subsidy") is not None:
+                native_value = price - self.coordinator.data["est_subsidy"]
+            else:
+                native_value = None
         elif self.entity_description.key == "grid_price":
             native_value = self.coordinator.data.get(
                 self.entity_description.key, {}
             ).get(dt_util.now().replace(minute=0, second=0, microsecond=0))
         elif self.entity_description.key == "total_price_with_subsidy":
-            grid_price = self.coordinator.data.get("grid_price", {}).get(
-                dt_util.now().replace(minute=0, second=0, microsecond=0)
-            )
-            price = self.coordinator.get_price_at(dt_util.now())
-            native_value = (
-                grid_price + price - self.coordinator.data.get("est_subsidy", 0)
-            )
+            if self.coordinator.data.get("est_subsidy") is not None:
+                grid_price = self.coordinator.data.get("grid_price", {}).get(
+                    dt_util.now().replace(minute=0, second=0, microsecond=0)
+                )
+                price = self.coordinator.get_price_at(dt_util.now())
+                native_value = (
+                    grid_price + price - self.coordinator.data["est_subsidy"]
+                )
+            else:
+                native_value = None
         else:
             native_value = self.coordinator.data.get(self.entity_description.key)
 
