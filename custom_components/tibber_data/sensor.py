@@ -101,6 +101,8 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 grid_price = self.coordinator.data.get("grid_price", {}).get(
                     dt_util.now().replace(minute=0, second=0, microsecond=0)
                 )
+                if grid_price is None:
+                    return
                 price = self.coordinator.get_price_at(dt_util.now())
                 native_value = (
                     grid_price + price - self.coordinator.data["est_subsidy"]
