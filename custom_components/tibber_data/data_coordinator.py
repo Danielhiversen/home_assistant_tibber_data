@@ -69,7 +69,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         now = dt_util.now(dt_util.DEFAULT_TIME_ZONE)
         data = {} if self.data is None else self.data
         for func, next_update in self._update_functions.copy().items():
-            _LOGGER.debug("Updating Tibber data %s", next_update)
+            _LOGGER.debug("Updating Tibber data %s %s", func, next_update)
             if now >= next_update:
                 try:
                     self._update_functions[func] = await func(data, now)
@@ -241,6 +241,8 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             cons = Consumption(date, _cons, _hour.get("unitPrice"), _hour.get("cost"))
             month_consumption.add(cons)
 
+            if cons.cons is None:
+                continue
             if len(max_month) < 3 or cons > max_month[-1]:
                 same_day = False
                 for k, _cons in enumerate(max_month):
@@ -254,6 +256,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 max_month.sort(reverse=True)
                 if len(max_month) > 3:
                     del max_month[-1]
+
         if max_month and sum(max_month) is not None:
             data["peak_consumption"] = sum(max_month) / len(max_month)
             data["peak_consumption_attrs"] = {
