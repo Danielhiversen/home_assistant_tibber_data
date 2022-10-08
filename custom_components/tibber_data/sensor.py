@@ -95,13 +95,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 native_value = None
         elif self.entity_description.key == "grid_price":
 
-            self._attr_extra_state_attributes = {
-            "today": None,
-            "raw_today": None,
-            "tomorrow_valid": False,
-            "tomorrow": None,
-            "raw_tomorrow": None,
-            }
+            self._attr_extra_state_attributes = {}
             local_today = []
             local_raw_today = []
             local_tomorrow = []
@@ -122,6 +116,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 if (len(local_tomorrow) > 0):
                     self._attr_extra_state_attributes["tomorrow_valid"] = True
                 else:
+                    self._attr_extra_state_attributes["tomorrow_valid"] = False
                     _LOGGER.debug("No priceinfo for tomorrow")
                 self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
                 self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
@@ -147,14 +142,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 
         elif self.entity_description.key == "energy_price":
             
-            self._attr_extra_state_attributes = {
-            #"raw_data": None,
-            "today": None,
-            "raw_today": None,
-            "tomorrow_valid": False,
-            "tomorrow": None,
-            "raw_tomorrow": None,
-            }
+            self._attr_extra_state_attributes = {}
             
             priceinfo = self.coordinator.data.get("hourly_prices", {})
             # find current price
@@ -163,7 +151,6 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 if dt_util.parse_datetime(i["time"]) == now_hour:
                     native_value = i["total"]
             
-            #self._attr_extra_state_attributes["raw_data"] = priceinfo
             local_today = []
             local_raw_today = []
             local_tomorrow = []
@@ -176,27 +163,21 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 if (dt_util.parse_datetime(entry["time"]).date() == (dt_util.now().date() + datetime.timedelta(days=1)) ):
                     local_tomorrow.append(entry["total"])
                     local_raw_tomorrow.append({"time":entry["time"],"total":entry["total"]})
-                # add total with grid price to raw data
-                #entry["total_with_gridPrice"] = round(entry["total"] + entry["gridPrice"], 4)
 
             self._attr_extra_state_attributes["today"] = local_today
             self._attr_extra_state_attributes["raw_today"] = local_raw_today
             if (len(local_tomorrow) > 0):
                 self._attr_extra_state_attributes["tomorrow_valid"] = True
+                
             else:
+                self._attr_extra_state_attributes["tomorrow_valid"] = False
                 _LOGGER.debug("No priceinfo for tomorrow")
             self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
             self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
         
         elif self.entity_description.key == "total_price":
             
-            self._attr_extra_state_attributes = {
-            "today": None,
-            "raw_today": None,
-            "tomorrow_valid": False,
-            "tomorrow": None,
-            "raw_tomorrow": None,
-            }
+            self._attr_extra_state_attributes = {}
             native_value = None
             
             priceinfo = self.coordinator.data.get("hourly_prices", {})
@@ -225,6 +206,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 if (len(local_tomorrow) > 0):
                     self._attr_extra_state_attributes["tomorrow_valid"] = True
                 else:
+                    self._attr_extra_state_attributes["tomorrow_valid"] = False
                     _LOGGER.debug("No priceinfo for tomorrow")
                 self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
                 self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
