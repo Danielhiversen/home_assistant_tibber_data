@@ -2,6 +2,7 @@
 import datetime
 import logging
 from typing import List, Set
+from random import randrange
 
 import tibber
 from homeassistant.components.sensor import (
@@ -101,12 +102,14 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 data["grid_price"][
                     dt_util.parse_datetime(price_info["time"])
                 ] = price_info["gridPrice"]
-
-        if now.hour < 15:
-            return now.replace(hour=15, minute=0, second=0, microsecond=0)
+            # Add all hourly entries to data
+            data["hourly_prices"] = home["subscription"]["priceRating"]["hourly"]["entries"]
+            
+        # make update happen between 13.15 and 13.30
+        if now.hour < 13 and now.minute < 15:
+            return now.replace(hour=13, minute=15, second=0, microsecond=0) + datetime.timedelta(seconds=randrange(60*15))
         return now.replace(
-            hour=0, minute=0, second=0, microsecond=0
-        ) + datetime.timedelta(days=1)
+            hour=13, minute=15, second=0, microsecond=0) + datetime.timedelta(days=1) + datetime.timedelta(seconds=randrange(60*15))
 
     async def _get_charger_data_tibber(self, data, now):
         """Update charger data via Tibber API."""
