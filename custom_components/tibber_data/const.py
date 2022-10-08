@@ -73,4 +73,14 @@ TIBBER_APP_SENSORS: tuple[SensorEntityDescription, ...] = (
         name="Grid price",
         state_class=SensorStateClass.MEASUREMENT,
     ),
+    SensorEntityDescription(
+        key="energy_price",
+        name="Energy price",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="total_price",
+        name="Total price",
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
 )
