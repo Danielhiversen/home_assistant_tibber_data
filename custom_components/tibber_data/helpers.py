@@ -101,7 +101,7 @@ async def get_tibber_data(session, token: str):
                 "        addressText\n      }\n      subscription {\n"
                 "        priceRating {\n          hourly {\n"
                 "            entries {\n              time\n"
-                "              gridPrice\n            }\n"
+                "              gridPrice\n              total\n            }\n"
                 "          }\n        }\n      }\n    }\n  }\n}\n",
             }
         ),
