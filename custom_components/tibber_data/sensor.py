@@ -88,167 +88,15 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         if self.entity_description.key == "est_current_price_with_subsidy":
-            price = self.coordinator.get_price_at(dt_util.now())
-            if self.coordinator.data.get("est_subsidy") is not None:
-                native_value = price - self.coordinator.data["est_subsidy"]
-            else:
-                native_value = None
+            native_value = self.update_est_current_price_with_subsidy_sensor()
         elif self.entity_description.key == "grid_price":
-
-            self._attr_extra_state_attributes = {}
-            local_today = []
-            local_raw_today = []
-            local_tomorrow = []
-            local_raw_tomorrow = []
-            priceinfo = self.coordinator.data.get("hourly_prices", {})
-            # check if data has grid prices and add to attributes if available
-            if priceinfo[1]["gridPrice"]:
-                for entry in priceinfo:
-                    if (
-                        dt_util.parse_datetime(entry["time"]).date()
-                        == dt_util.now().date()
-                    ):
-                        local_today.append(entry["gridPrice"])
-                        local_raw_today.append(
-                            {"time": entry["time"], "gridPrice": entry["gridPrice"]}
-                        )
-                    if dt_util.parse_datetime(entry["time"]).date() == (
-                        dt_util.now().date() + datetime.timedelta(days=1)
-                    ):
-                        local_tomorrow.append(entry["gridPrice"])
-                        local_raw_tomorrow.append(
-                            {"time": entry["time"], "gridPrice": entry["gridPrice"]}
-                        )
-
-                self._attr_extra_state_attributes["today"] = local_today
-                self._attr_extra_state_attributes["raw_today"] = local_raw_today
-                if len(local_tomorrow) > 0:
-                    self._attr_extra_state_attributes["tomorrow_valid"] = True
-                else:
-                    self._attr_extra_state_attributes["tomorrow_valid"] = False
-                    _LOGGER.debug("No priceinfo for tomorrow")
-                self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
-                self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
-            else:
-                _LOGGER.debug("No grid price available")
-
-            native_value = self.coordinator.data.get(
-                self.entity_description.key, {}
-            ).get(dt_util.now().replace(minute=0, second=0, microsecond=0))
+            native_value = self.update_grid_price_sensor()
         elif self.entity_description.key == "total_price_with_subsidy":
-            if self.coordinator.data.get("est_subsidy") is not None:
-                grid_price = self.coordinator.data.get("grid_price", {}).get(
-                    dt_util.now().replace(minute=0, second=0, microsecond=0)
-                )
-                if grid_price is None:
-                    return
-                price = self.coordinator.get_price_at(dt_util.now())
-                native_value = grid_price + price - self.coordinator.data["est_subsidy"]
-            else:
-                native_value = None
-
+            native_value = self.update_energy_total_price_with_subsidy_sensor()
         elif self.entity_description.key == "energy_price":
-
-            self._attr_extra_state_attributes = {}
-
-            priceinfo = self.coordinator.data.get("hourly_prices", {})
-            # find current price
-            now_hour = dt_util.now().replace(minute=0, second=0, microsecond=0)
-            for i in priceinfo:
-                if dt_util.parse_datetime(i["time"]) == now_hour:
-                    native_value = i["total"]
-
-            local_today = []
-            local_raw_today = []
-            local_tomorrow = []
-            local_raw_tomorrow = []
-
-            for entry in priceinfo:
-                if dt_util.parse_datetime(entry["time"]).date() == dt_util.now().date():
-                    local_today.append(entry["total"])
-                    local_raw_today.append(
-                        {"time": entry["time"], "total": entry["total"]}
-                    )
-                if dt_util.parse_datetime(entry["time"]).date() == (
-                    dt_util.now().date() + datetime.timedelta(days=1)
-                ):
-                    local_tomorrow.append(entry["total"])
-                    local_raw_tomorrow.append(
-                        {"time": entry["time"], "total": entry["total"]}
-                    )
-
-            self._attr_extra_state_attributes["today"] = local_today
-            self._attr_extra_state_attributes["raw_today"] = local_raw_today
-            if len(local_tomorrow) > 0:
-                self._attr_extra_state_attributes["tomorrow_valid"] = True
-
-            else:
-                self._attr_extra_state_attributes["tomorrow_valid"] = False
-                _LOGGER.debug("No priceinfo for tomorrow")
-            self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
-            self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
-
+            native_value = self.update_energy_price_sensor()
         elif self.entity_description.key == "total_price":
-
-            self._attr_extra_state_attributes = {}
-            native_value = None
-
-            priceinfo = self.coordinator.data.get("hourly_prices", {})
-            # check if data has grid prices and add to attributes if available
-            if priceinfo[1]["gridPrice"]:
-                # find current price
-                now_hour = dt_util.now().replace(minute=0, second=0, microsecond=0)
-                for i in priceinfo:
-                    if dt_util.parse_datetime(i["time"]) == now_hour:
-                        native_value = round(i["total"] + i["gridPrice"], 4)
-
-                local_today = []
-                local_raw_today = []
-                local_tomorrow = []
-                local_raw_tomorrow = []
-                for entry in priceinfo:
-                    if (
-                        dt_util.parse_datetime(entry["time"]).date()
-                        == dt_util.now().date()
-                    ):
-                        local_today.append(
-                            round(entry["total"] + entry["gridPrice"], 4)
-                        )
-                        local_raw_today.append(
-                            {
-                                "time": entry["time"],
-                                "total_with_gridPrice": round(
-                                    entry["total"] + entry["gridPrice"], 4
-                                ),
-                            }
-                        )
-                    if dt_util.parse_datetime(entry["time"]).date() == (
-                        dt_util.now().date() + datetime.timedelta(days=1)
-                    ):
-                        local_tomorrow.append(
-                            round(entry["total"] + entry["gridPrice"], 4)
-                        )
-                        local_raw_tomorrow.append(
-                            {
-                                "time": entry["time"],
-                                "total_with_gridPrice": round(
-                                    entry["total"] + entry["gridPrice"], 4
-                                ),
-                            }
-                        )
-
-                self._attr_extra_state_attributes["today"] = local_today
-                self._attr_extra_state_attributes["raw_today"] = local_raw_today
-                if len(local_tomorrow) > 0:
-                    self._attr_extra_state_attributes["tomorrow_valid"] = True
-                else:
-                    self._attr_extra_state_attributes["tomorrow_valid"] = False
-                    _LOGGER.debug("No priceinfo for tomorrow")
-                self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
-                self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
-            else:
-                _LOGGER.debug("No grid price available, no total price to add")
-
+            native_value = self.update_total_price_sensor()
         else:
             native_value = self.coordinator.data.get(self.entity_description.key)
 
@@ -261,3 +109,155 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             )
 
         self.async_write_ha_state()
+
+    def update_est_current_price_with_subsidy_sensor(self):
+        """Update est_current_price_with_subsidy sensor."""
+        price = self.coordinator.get_price_at(dt_util.now())
+        if self.coordinator.data.get("est_subsidy") is not None:
+            native_value = price - self.coordinator.data["est_subsidy"]
+        else:
+            native_value = None
+        return native_value
+
+    def update_total_price_sensor(self):
+        """Update total_price sensor."""
+        self._attr_extra_state_attributes = {}
+        native_value = None
+        price_info = self.coordinator.data.get("hourly_prices", {})
+        # check if data has grid prices and add to attributes if available
+        if price_info[1]["gridPrice"]:
+            # find current price
+            now_hour = dt_util.now().replace(minute=0, second=0, microsecond=0)
+            for i in price_info:
+                if dt_util.parse_datetime(i["time"]) == now_hour:
+                    native_value = round(i["total"] + i["gridPrice"], 4)
+
+            local_today = []
+            local_raw_today = []
+            local_tomorrow = []
+            local_raw_tomorrow = []
+            for entry in price_info:
+                if dt_util.parse_datetime(entry["time"]).date() == dt_util.now().date():
+                    local_today.append(round(entry["total"] + entry["gridPrice"], 4))
+                    local_raw_today.append(
+                        {
+                            "time": entry["time"],
+                            "total_with_gridPrice": round(
+                                entry["total"] + entry["gridPrice"], 4
+                            ),
+                        }
+                    )
+                if dt_util.parse_datetime(entry["time"]).date() == (
+                    dt_util.now().date() + datetime.timedelta(days=1)
+                ):
+                    local_tomorrow.append(round(entry["total"] + entry["gridPrice"], 4))
+                    local_raw_tomorrow.append(
+                        {
+                            "time": entry["time"],
+                            "total_with_gridPrice": round(
+                                entry["total"] + entry["gridPrice"], 4
+                            ),
+                        }
+                    )
+
+            self._attr_extra_state_attributes["today"] = local_today
+            self._attr_extra_state_attributes["raw_today"] = local_raw_today
+            if len(local_tomorrow) > 0:
+                self._attr_extra_state_attributes["tomorrow_valid"] = True
+            else:
+                self._attr_extra_state_attributes["tomorrow_valid"] = False
+                _LOGGER.debug("No priceinfo for tomorrow")
+            self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
+            self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
+        else:
+            _LOGGER.debug("No grid price available, no total price to add")
+        return native_value
+
+    def update_grid_price_sensor(self):
+        """Update grid_price sensor."""
+        self._attr_extra_state_attributes = {}
+        local_today = []
+        local_raw_today = []
+        local_tomorrow = []
+        local_raw_tomorrow = []
+        price_info = self.coordinator.data.get("hourly_prices", {})
+        # check if data has grid prices and add to attributes if available
+        if price_info[1]["gridPrice"]:
+            for entry in price_info:
+                if dt_util.parse_datetime(entry["time"]).date() == dt_util.now().date():
+                    local_today.append(entry["gridPrice"])
+                    local_raw_today.append(
+                        {"time": entry["time"], "gridPrice": entry["gridPrice"]}
+                    )
+                if dt_util.parse_datetime(entry["time"]).date() == (
+                    dt_util.now().date() + datetime.timedelta(days=1)
+                ):
+                    local_tomorrow.append(entry["gridPrice"])
+                    local_raw_tomorrow.append(
+                        {"time": entry["time"], "gridPrice": entry["gridPrice"]}
+                    )
+
+            self._attr_extra_state_attributes["today"] = local_today
+            self._attr_extra_state_attributes["raw_today"] = local_raw_today
+            if len(local_tomorrow) > 0:
+                self._attr_extra_state_attributes["tomorrow_valid"] = True
+            else:
+                self._attr_extra_state_attributes["tomorrow_valid"] = False
+                _LOGGER.debug("No priceinfo for tomorrow")
+            self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
+            self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
+        else:
+            _LOGGER.debug("No grid price available")
+        native_value = self.coordinator.data.get(self.entity_description.key, {}).get(
+            dt_util.now().replace(minute=0, second=0, microsecond=0)
+        )
+        return native_value
+
+    def update_energy_total_price_with_subsidy_sensor(self):
+        """Update energy_total_price_with_subsidy sensor."""
+        if self.coordinator.data.get("est_subsidy") is not None:
+            grid_price = self.coordinator.data.get("grid_price", {}).get(
+                dt_util.now().replace(minute=0, second=0, microsecond=0)
+            )
+            if grid_price is None:
+                return None
+            price = self.coordinator.get_price_at(dt_util.now())
+            native_value = grid_price + price - self.coordinator.data["est_subsidy"]
+        else:
+            native_value = None
+        return native_value
+
+    def update_energy_price_sensor(self):
+        """Update energy_price sensor."""
+        self._attr_extra_state_attributes = {}
+        price_info = self.coordinator.data.get("hourly_prices", {})
+        # find current price
+        now_hour = dt_util.now().replace(minute=0, second=0, microsecond=0)
+        for i in price_info:
+            if dt_util.parse_datetime(i["time"]) == now_hour:
+                native_value = i["total"]
+        local_today = []
+        local_raw_today = []
+        local_tomorrow = []
+        local_raw_tomorrow = []
+        for entry in price_info:
+            if dt_util.parse_datetime(entry["time"]).date() == dt_util.now().date():
+                local_today.append(entry["total"])
+                local_raw_today.append({"time": entry["time"], "total": entry["total"]})
+            if dt_util.parse_datetime(entry["time"]).date() == (
+                dt_util.now().date() + datetime.timedelta(days=1)
+            ):
+                local_tomorrow.append(entry["total"])
+                local_raw_tomorrow.append(
+                    {"time": entry["time"], "total": entry["total"]}
+                )
+        self._attr_extra_state_attributes["today"] = local_today
+        self._attr_extra_state_attributes["raw_today"] = local_raw_today
+        if len(local_tomorrow) > 0:
+            self._attr_extra_state_attributes["tomorrow_valid"] = True
+        else:
+            self._attr_extra_state_attributes["tomorrow_valid"] = False
+            _LOGGER.debug("No priceinfo for tomorrow")
+        self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
+        self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
+        return native_value
