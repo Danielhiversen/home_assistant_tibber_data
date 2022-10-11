@@ -103,13 +103,20 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     dt_util.parse_datetime(price_info["time"])
                 ] = price_info["gridPrice"]
             # Add all hourly entries to data
-            data["hourly_prices"] = home["subscription"]["priceRating"]["hourly"]["entries"]
-            
+            data["hourly_prices"] = home["subscription"]["priceRating"]["hourly"][
+                "entries"
+            ]
+
         # make update happen between 13.15 and 13.30
         if now.hour < 13 and now.minute < 15:
-            return now.replace(hour=13, minute=15, second=0, microsecond=0) + datetime.timedelta(seconds=randrange(60*15))
-        return now.replace(
-            hour=13, minute=15, second=0, microsecond=0) + datetime.timedelta(days=1) + datetime.timedelta(seconds=randrange(60*15))
+            return now.replace(
+                hour=13, minute=15, second=0, microsecond=0
+            ) + datetime.timedelta(seconds=randrange(60 * 15))
+        return (
+            now.replace(hour=13, minute=15, second=0, microsecond=0)
+            + datetime.timedelta(days=1)
+            + datetime.timedelta(seconds=randrange(60 * 15))
+        )
 
     async def _get_charger_data_tibber(self, data, now):
         """Update charger data via Tibber API."""
@@ -339,15 +346,21 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 total_cost_day += cons.cost
                 total_cons_day += cons.cons
         data["monthly_avg_price"] = total_price / n_price if n_price > 0 else None
-        data["est_subsidy"] = (_total_price / _n_price - 0.7 * 1.25) * 0.9 if _n_price > 0 else None
+        data["est_subsidy"] = (
+            (_total_price / _n_price - 0.7 * 1.25) * 0.9 if _n_price > 0 else None
+        )
         data["customer_avg_price"] = total_cost / total_cons if total_cons > 0 else None
 
         data["daily_cost_with_subsidy"] = (
-            total_cost_day - data["est_subsidy"] * total_cons_day
-        ) if (data["est_subsidy"] is not None and total_cost_day is not None )else None
+            (total_cost_day - data["est_subsidy"] * total_cons_day)
+            if (data["est_subsidy"] is not None and total_cost_day is not None)
+            else None
+        )
         data["monthly_cost_with_subsidy"] = (
-            total_cost - data["est_subsidy"] * total_cons
-        ) if (data["est_subsidy"] is not None and total_cost is not None) else None
+            (total_cost - data["est_subsidy"] * total_cons)
+            if (data["est_subsidy"] is not None and total_cost is not None)
+            else None
+        )
         return next_update
 
     @property

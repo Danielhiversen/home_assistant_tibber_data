@@ -102,18 +102,27 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             local_raw_tomorrow = []
             priceinfo = self.coordinator.data.get("hourly_prices", {})
             # check if data has grid prices and add to attributes if available
-            if (priceinfo[1]["gridPrice"]):
+            if priceinfo[1]["gridPrice"]:
                 for entry in priceinfo:
-                    if (dt_util.parse_datetime(entry["time"]).date() == dt_util.now().date() ):
+                    if (
+                        dt_util.parse_datetime(entry["time"]).date()
+                        == dt_util.now().date()
+                    ):
                         local_today.append(entry["gridPrice"])
-                        local_raw_today.append({"time":entry["time"],"gridPrice":entry["gridPrice"]})
-                    if (dt_util.parse_datetime(entry["time"]).date() == (dt_util.now().date() + datetime.timedelta(days=1)) ):
+                        local_raw_today.append(
+                            {"time": entry["time"], "gridPrice": entry["gridPrice"]}
+                        )
+                    if dt_util.parse_datetime(entry["time"]).date() == (
+                        dt_util.now().date() + datetime.timedelta(days=1)
+                    ):
                         local_tomorrow.append(entry["gridPrice"])
-                        local_raw_tomorrow.append({"time":entry["time"],"gridPrice":entry["gridPrice"]})
-                
+                        local_raw_tomorrow.append(
+                            {"time": entry["time"], "gridPrice": entry["gridPrice"]}
+                        )
+
                 self._attr_extra_state_attributes["today"] = local_today
                 self._attr_extra_state_attributes["raw_today"] = local_raw_today
-                if (len(local_tomorrow) > 0):
+                if len(local_tomorrow) > 0:
                     self._attr_extra_state_attributes["tomorrow_valid"] = True
                 else:
                     self._attr_extra_state_attributes["tomorrow_valid"] = False
@@ -122,7 +131,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
             else:
                 _LOGGER.debug("No grid price available")
-            
+
             native_value = self.coordinator.data.get(
                 self.entity_description.key, {}
             ).get(dt_util.now().replace(minute=0, second=0, microsecond=0))
@@ -134,76 +143,103 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 if grid_price is None:
                     return
                 price = self.coordinator.get_price_at(dt_util.now())
-                native_value = (
-                    grid_price + price - self.coordinator.data["est_subsidy"]
-                )
+                native_value = grid_price + price - self.coordinator.data["est_subsidy"]
             else:
                 native_value = None
-                
+
         elif self.entity_description.key == "energy_price":
-            
+
             self._attr_extra_state_attributes = {}
-            
+
             priceinfo = self.coordinator.data.get("hourly_prices", {})
             # find current price
             now_hour = dt_util.now().replace(minute=0, second=0, microsecond=0)
             for i in priceinfo:
                 if dt_util.parse_datetime(i["time"]) == now_hour:
                     native_value = i["total"]
-            
+
             local_today = []
             local_raw_today = []
             local_tomorrow = []
             local_raw_tomorrow = []
 
             for entry in priceinfo:
-                if (dt_util.parse_datetime(entry["time"]).date() == dt_util.now().date() ):
+                if dt_util.parse_datetime(entry["time"]).date() == dt_util.now().date():
                     local_today.append(entry["total"])
-                    local_raw_today.append({"time":entry["time"],"total":entry["total"]})
-                if (dt_util.parse_datetime(entry["time"]).date() == (dt_util.now().date() + datetime.timedelta(days=1)) ):
+                    local_raw_today.append(
+                        {"time": entry["time"], "total": entry["total"]}
+                    )
+                if dt_util.parse_datetime(entry["time"]).date() == (
+                    dt_util.now().date() + datetime.timedelta(days=1)
+                ):
                     local_tomorrow.append(entry["total"])
-                    local_raw_tomorrow.append({"time":entry["time"],"total":entry["total"]})
+                    local_raw_tomorrow.append(
+                        {"time": entry["time"], "total": entry["total"]}
+                    )
 
             self._attr_extra_state_attributes["today"] = local_today
             self._attr_extra_state_attributes["raw_today"] = local_raw_today
-            if (len(local_tomorrow) > 0):
+            if len(local_tomorrow) > 0:
                 self._attr_extra_state_attributes["tomorrow_valid"] = True
-                
+
             else:
                 self._attr_extra_state_attributes["tomorrow_valid"] = False
                 _LOGGER.debug("No priceinfo for tomorrow")
             self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
             self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
-        
+
         elif self.entity_description.key == "total_price":
-            
+
             self._attr_extra_state_attributes = {}
             native_value = None
-            
+
             priceinfo = self.coordinator.data.get("hourly_prices", {})
             # check if data has grid prices and add to attributes if available
-            if (priceinfo[1]["gridPrice"]):
+            if priceinfo[1]["gridPrice"]:
                 # find current price
                 now_hour = dt_util.now().replace(minute=0, second=0, microsecond=0)
                 for i in priceinfo:
                     if dt_util.parse_datetime(i["time"]) == now_hour:
                         native_value = round(i["total"] + i["gridPrice"], 4)
-                
+
                 local_today = []
                 local_raw_today = []
                 local_tomorrow = []
                 local_raw_tomorrow = []
                 for entry in priceinfo:
-                    if (dt_util.parse_datetime(entry["time"]).date() == dt_util.now().date() ):
-                        local_today.append(round(entry["total"] + entry["gridPrice"], 4))
-                        local_raw_today.append({"time":entry["time"],"total_with_gridPrice":round(entry["total"] + entry["gridPrice"], 4)})
-                    if (dt_util.parse_datetime(entry["time"]).date() == (dt_util.now().date() + datetime.timedelta(days=1)) ):
-                        local_tomorrow.append(round(entry["total"] + entry["gridPrice"], 4))
-                        local_raw_tomorrow.append({"time":entry["time"],"total_with_gridPrice":round(entry["total"] + entry["gridPrice"], 4)})
-                
+                    if (
+                        dt_util.parse_datetime(entry["time"]).date()
+                        == dt_util.now().date()
+                    ):
+                        local_today.append(
+                            round(entry["total"] + entry["gridPrice"], 4)
+                        )
+                        local_raw_today.append(
+                            {
+                                "time": entry["time"],
+                                "total_with_gridPrice": round(
+                                    entry["total"] + entry["gridPrice"], 4
+                                ),
+                            }
+                        )
+                    if dt_util.parse_datetime(entry["time"]).date() == (
+                        dt_util.now().date() + datetime.timedelta(days=1)
+                    ):
+                        local_tomorrow.append(
+                            round(entry["total"] + entry["gridPrice"], 4)
+                        )
+                        local_raw_tomorrow.append(
+                            {
+                                "time": entry["time"],
+                                "total_with_gridPrice": round(
+                                    entry["total"] + entry["gridPrice"], 4
+                                ),
+                            }
+                        )
+
                 self._attr_extra_state_attributes["today"] = local_today
                 self._attr_extra_state_attributes["raw_today"] = local_raw_today
-                if (len(local_tomorrow) > 0):
+                if len(local_tomorrow) > 0:
                     self._attr_extra_state_attributes["tomorrow_valid"] = True
                 else:
                     self._attr_extra_state_attributes["tomorrow_valid"] = False
@@ -212,7 +248,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
             else:
                 _LOGGER.debug("No grid price available, no total price to add")
- 
+
         else:
             native_value = self.coordinator.data.get(self.entity_description.key)
 
