@@ -56,8 +56,8 @@ jobs:
 
       - name: Flake8 Code Linter
         run: flakeheaven lint $SRC_FOLDER
-      - name: Mypy Code Linter
-        run: mypy $SRC_FOLDER
+#      - name: Mypy Code Linter
+#        run: mypy $SRC_FOLDER
       - name: Pylint Code Linter
         run: pylint $SRC_FOLDER
 
