@@ -101,7 +101,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             native_value = self.coordinator.data.get(self.entity_description.key)
 
         self._attr_native_value = (
-            round(native_value, 2) if native_value else native_value
+            round(native_value, 2) if native_value is not None else None
         )
         if self.entity_description.key == "peak_consumption":
             self._attr_extra_state_attributes = self.coordinator.data.get(
@@ -113,11 +113,9 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
     def update_est_current_price_with_subsidy_sensor(self):
         """Update est_current_price_with_subsidy sensor."""
         price = self.coordinator.get_price_at(dt_util.now())
-        if self.coordinator.data.get("est_subsidy") is not None:
-            native_value = price - self.coordinator.data["est_subsidy"]
-        else:
-            native_value = None
-        return native_value
+        if self.coordinator.data.get("est_subsidy") is None or price is None:
+            return None
+        return price - self.coordinator.data["est_subsidy"]
 
     def update_total_price_sensor(self):
         """Update total_price sensor."""
@@ -203,7 +201,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 self._attr_extra_state_attributes["tomorrow_valid"] = True
             else:
                 self._attr_extra_state_attributes["tomorrow_valid"] = False
-                _LOGGER.debug("No priceinfo for tomorrow")
+                _LOGGER.debug("No price info for tomorrow")
             self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
             self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
         else:
@@ -215,17 +213,15 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
 
     def update_energy_total_price_with_subsidy_sensor(self):
         """Update energy_total_price_with_subsidy sensor."""
-        if self.coordinator.data.get("est_subsidy") is not None:
-            grid_price = self.coordinator.data.get("grid_price", {}).get(
-                dt_util.now().replace(minute=0, second=0, microsecond=0)
-            )
-            if grid_price is None:
-                return None
-            price = self.coordinator.get_price_at(dt_util.now())
-            native_value = grid_price + price - self.coordinator.data["est_subsidy"]
-        else:
-            native_value = None
-        return native_value
+        if self.coordinator.data.get("est_subsidy") is None:
+            return None
+        grid_price = self.coordinator.data.get("grid_price", {}).get(
+            dt_util.now().replace(minute=0, second=0, microsecond=0)
+        )
+        if grid_price is None:
+            return None
+        price = self.coordinator.get_price_at(dt_util.now())
+        return grid_price + price - self.coordinator.data["est_subsidy"]
 
     def update_energy_price_sensor(self):
         """Update energy_price sensor."""
