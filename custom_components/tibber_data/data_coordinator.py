@@ -17,7 +17,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .consumption_data import Consumption
-from .helpers import (
+from .tibber_api import (
     get_historic_data,
     get_historic_production_data,
     get_tibber_chargers,
