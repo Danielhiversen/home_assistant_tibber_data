@@ -164,7 +164,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                 self._attr_extra_state_attributes["tomorrow_valid"] = True
             else:
                 self._attr_extra_state_attributes["tomorrow_valid"] = False
-                _LOGGER.debug("No priceinfo for tomorrow")
+                _LOGGER.debug("No price info for tomorrow")
             self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
             self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
         else:
@@ -229,9 +229,11 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
         price_info = self.coordinator.data.get("hourly_prices", {})
         # find current price
         now_hour = dt_util.now().replace(minute=0, second=0, microsecond=0)
+        native_value = None
         for i in price_info:
             if dt_util.parse_datetime(i["time"]) == now_hour:
                 native_value = i["total"]
+                break
         local_today = []
         local_raw_today = []
         local_tomorrow = []
@@ -253,7 +255,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             self._attr_extra_state_attributes["tomorrow_valid"] = True
         else:
             self._attr_extra_state_attributes["tomorrow_valid"] = False
-            _LOGGER.debug("No priceinfo for tomorrow")
+            _LOGGER.debug("No price info for tomorrow")
         self._attr_extra_state_attributes["tomorrow"] = local_tomorrow
         self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
         return native_value
