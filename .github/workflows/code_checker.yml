@@ -41,10 +41,10 @@ jobs:
       - name: black
         run: black $SRC_FOLDER
       - name: Check for modified files
-        id: git-check
+        id: git-check-black
         run: git diff --quiet || echo "::set-output name=modified::true"
       - name: Push changes black
-        if: steps.git-check-isort.outputs.modified == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+        if: steps.git-check-black.outputs.modified == 'true' && github.event.pull_request.head.repo.full_name == github.repository
         run: |
             git config --global user.name 'Daniel Hoyer'
             git config --global user.email 'mail@dahoiv.net'

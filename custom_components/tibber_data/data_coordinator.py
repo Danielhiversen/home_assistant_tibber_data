@@ -1,6 +1,6 @@
 """Data coordinator for Tibber."""
-import datetime
 import logging
+import datetime
 from random import randrange
 from typing import List, Set
 
