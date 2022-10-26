@@ -1,10 +1,10 @@
 """Data coordinator for Tibber."""
-import aiohttp
 import datetime
 import logging
 from random import randrange
 from typing import List, Set
 
+import aiohttp
 import tibber
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -88,7 +88,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
     async def _get_data_tibber(self, data, now):
         """Update data via Tibber API."""
         if self._token is None:
-            self._token = await get_tibber_token(self._session, self.email, self._password)
+            self._token = await get_tibber_token(
+                self._session, self.email, self._password
+            )
             if self._token is None:
                 return now + datetime.timedelta(minutes=2)
 
@@ -126,12 +128,16 @@ class TibberDataCoordinator(DataUpdateCoordinator):
     async def _get_offline_evs_data_tibber(self, data, now):
         """Update offline ev data via Tibber API."""
         if self._token is None:
-            self._token = await get_tibber_token(self._session, self.email, self._password)
+            self._token = await get_tibber_token(
+                self._session, self.email, self._password
+            )
             if self._token is None:
                 return now + datetime.timedelta(minutes=2)
 
         try:
-            self._offline_evs = await get_tibber_offline_evs_data(self._session, self._token)
+            self._offline_evs = await get_tibber_offline_evs_data(
+                self._session, self._token
+            )
         except Exception:  # pylint: disable=broad-except
             _LOGGER.exception("Error fetching Tibber offline ev data")
             self._token = None
@@ -149,7 +155,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
     async def _get_charger_data_tibber(self, data, now):
         """Update charger data via Tibber API."""
         if self._token is None:
-            self._token = await get_tibber_token(self._session, self.email, self._password)
+            self._token = await get_tibber_token(
+                self._session, self.email, self._password
+            )
             if self._token is None:
                 return now + datetime.timedelta(minutes=2)
 
