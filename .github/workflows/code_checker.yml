@@ -2,8 +2,8 @@ name: Code-checker
 
 on:
   workflow_run:
-     workflows: ["black"]
-     types: [completed]
+    workflows: ["black"]
+    types: [completed]
 
 jobs:
   validate:
