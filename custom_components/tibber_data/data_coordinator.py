@@ -394,11 +394,11 @@ class TibberDataCoordinator(DataUpdateCoordinator):
     def offline_ev_entity_descriptions(self):
         """Return the entity descriptions for the offline ev."""
         entity_descriptions = []
-        for ev in self._offline_evs:
+        for ev_dev in self._offline_evs:
             entity_descriptions.append(
                 SensorEntityDescription(
-                    key=f"offline_ev_{ev['brandAndModel']}_soc",
-                    name=f"{ev['brandAndModel']} soc",
+                    key=f"offline_ev_{ev_dev['brandAndModel']}_soc",
+                    name=f"{ev_dev['brandAndModel']} soc",
                     native_unit_of_measurement=PERCENTAGE,
                     state_class=SensorStateClass.MEASUREMENT,
                 )

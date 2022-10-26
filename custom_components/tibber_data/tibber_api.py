@@ -6,6 +6,8 @@ import logging
 
 import tibber
 
+TIBBER_API = "https://app.tibber.com/v4/gql"
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -152,7 +154,7 @@ async def get_tibber_chargers_data(
             }
         ),
     }
-    resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
+    resp = await session.post(TIBBER_API, **post_args)
     meta_data = (await resp.json())["data"]["me"]["home"]["evCharger"]
 
     # pylint: disable=consider-using-f-string
@@ -173,7 +175,7 @@ async def get_tibber_chargers_data(
             }
         ),
     }
-    resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
+    resp = await session.post(TIBBER_API, **post_args)
     charger_consumption = (await resp.json())["data"]["me"]["home"][
         "evChargerConsumption"
     ]
@@ -195,21 +197,21 @@ async def get_tibber_offline_evs_data(
             }
         ),
     }
-    resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
+    resp = await session.post(TIBBER_API, **post_args)
 
     data = (await resp.json())["data"]["me"]["myVehicles"]["vehicles"]
 
     res = []
     for ev_raw in data:
-        ev = {"id": ev_raw["id"], }
+        ev_dev = {"id": ev_raw["id"], }
         settings = ev_raw["detailsScreen"]["settings"]
         for setting in settings:
             try:
                 val = float(setting["value"])
             except ValueError:
                 val = setting["value"]
-            ev[setting["key"]] = val
-        res.append(ev)
+            ev_dev[setting["key"]] = val
+        res.append(ev_dev)
     return res
 
 
@@ -233,6 +235,6 @@ async def update_offline_evs_soc(
             }
         ),
     }
-    resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
+    resp = await session.post(TIBBER_API, **post_args)
     print(resp)
     return True
