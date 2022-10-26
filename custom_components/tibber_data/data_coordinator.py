@@ -1,8 +1,8 @@
 """Data coordinator for Tibber."""
 import datetime
 import logging
-from typing import List, Set
 from random import randrange
+from typing import List, Set
 
 import tibber
 from homeassistant.components.sensor import (
@@ -23,8 +23,8 @@ from .tibber_api import (
     get_tibber_chargers,
     get_tibber_chargers_data,
     get_tibber_data,
-    get_tibber_token,
     get_tibber_offline_evs_data,
+    get_tibber_token,
 )
 
 _LOGGER = logging.getLogger(__name__)

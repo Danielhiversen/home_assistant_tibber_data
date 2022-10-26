@@ -1,7 +1,7 @@
 """Tibber data"""
+import datetime
 import logging
 from typing import cast
-import datetime
 
 import tibber
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
