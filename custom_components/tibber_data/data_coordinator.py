@@ -1,10 +1,10 @@
 """Data coordinator for Tibber."""
-import aiohttp
 import datetime
 import logging
 from random import randrange
 from typing import List, Set
 
+import aiohttp
 import tibber
 from homeassistant.components.sensor import (
     SensorDeviceClass,
