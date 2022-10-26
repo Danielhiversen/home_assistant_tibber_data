@@ -193,7 +193,7 @@ async def get_tibber_offline_evs_data(
         "data": json.dumps(
             {
                 "variables": {},
-                "query": '{ me { myVehicles { vehicles { title id detailsScreen { settings { key value } } } } } }'
+                "query": "{ me { myVehicles { vehicles { title id detailsScreen { settings { key value } } } } } }",
             }
         ),
     }
@@ -203,7 +203,9 @@ async def get_tibber_offline_evs_data(
 
     res = []
     for ev_raw in data:
-        ev_dev = {"id": ev_raw["id"], }
+        ev_dev = {
+            "id": ev_raw["id"],
+        }
         settings = ev_raw["detailsScreen"]["settings"]
         for setting in settings:
             try:
@@ -228,10 +230,10 @@ async def update_offline_evs_soc(
             {
                 "variables": {},
                 "query": 'mutation { me { updateVehicle( id: "'
-                         + device_id +
-                         '" settings: [{ key: "batteryLevel", value: "'
-                         + str(soc) +
-                         '" }] ) { vehicles { id title } } } }'
+                + device_id
+                + '" settings: [{ key: "batteryLevel", value: "'
+                + str(soc)
+                + '" }] ) { vehicles { id title } } } }',
             }
         ),
     }

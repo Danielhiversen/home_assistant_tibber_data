@@ -57,7 +57,9 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
             for (
                 offline_ev_entity_descriptions
             ) in coordinator.offline_ev_entity_descriptions:
-                dev.append(TibberDataSensor(coordinator, offline_ev_entity_descriptions))
+                dev.append(
+                    TibberDataSensor(coordinator, offline_ev_entity_descriptions)
+                )
 
     async_add_entities(dev)
 
