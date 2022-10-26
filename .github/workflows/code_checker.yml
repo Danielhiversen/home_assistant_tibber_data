@@ -55,6 +55,7 @@ jobs:
             git push
 
   validate:
+    needs: black
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
@@ -64,13 +65,6 @@ jobs:
     env:
       SRC_FOLDER: custom_components/tibber_data
     steps:
-      - name: Wait for tests to succeed
-        uses: lewagon/wait-on-check-action@v1.2.0
-        with:
-          ref: ${{ github.ref }}
-          check-name: 'black'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 100
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
