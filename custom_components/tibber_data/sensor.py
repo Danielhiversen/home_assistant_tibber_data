@@ -51,9 +51,13 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
             for entity_description in TIBBER_APP_SENSORS:
                 dev.append(TibberDataSensor(coordinator, entity_description))
             for (
-                chargers_entity_descritpions
+                chargers_entity_descriptions
             ) in coordinator.chargers_entity_descriptions:
-                dev.append(TibberDataSensor(coordinator, chargers_entity_descritpions))
+                dev.append(TibberDataSensor(coordinator, chargers_entity_descriptions))
+            for (
+                offline_ev_entity_descriptions
+            ) in coordinator.offline_ev_entity_descriptions:
+                dev.append(TibberDataSensor(coordinator, offline_ev_entity_descriptions))
 
     async_add_entities(dev)
 

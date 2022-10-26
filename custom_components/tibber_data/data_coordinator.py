@@ -10,7 +10,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import ENERGY_KILO_WATT_HOUR
+from homeassistant.const import ENERGY_KILO_WATT_HOUR, PERCENTAGE
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
@@ -24,6 +24,7 @@ from .tibber_api import (
     get_tibber_chargers_data,
     get_tibber_data,
     get_tibber_token,
+    get_tibber_offline_evs_data,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self._password = password
         self._token = None
         self._chargers: List[str] = []
+        self._offline_evs: List[dict] = []
         self._month_consumption: Set[Consumption] = set()
 
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
@@ -54,6 +56,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         if self._password:
             self._update_functions[self._get_data_tibber] = _next_update
             self._update_functions[self._get_charger_data_tibber] = _next_update
+            self._update_functions[self._get_offline_evs_data_tibber] = _next_update
         if self.tibber_home.has_production:
             self._update_functions[self._get_production_data] = _next_update
 
@@ -117,6 +120,30 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             + datetime.timedelta(days=1)
             + datetime.timedelta(seconds=randrange(60 * 15))
         )
+
+    async def _get_offline_evs_data_tibber(self, data, now):
+        """Update offline ev data via Tibber API."""
+        session = async_get_clientsession(self.hass)
+        if self._token is None:
+            self._token = await get_tibber_token(session, self.email, self._password)
+            if self._token is None:
+                return now + datetime.timedelta(minutes=2)
+
+        try:
+            self._offline_evs = await get_tibber_offline_evs_data(
+                session, self._token
+            )
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Error fetching Tibber offline ev data")
+            self._token = None
+            return now + datetime.timedelta(minutes=2)
+
+        if not self._offline_evs:
+            return now + datetime.timedelta(hours=2)
+
+        for ev in self._offline_evs:
+            data[f"offline_ev_{ev['brandAndModel']}_soc"] = ev["batteryLevel"]
+        return now + datetime.timedelta(minutes=30)
 
     async def _get_charger_data_tibber(self, data, now):
         """Update charger data via Tibber API."""
@@ -362,6 +389,21 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             else None
         )
         return next_update
+
+    @property
+    def offline_ev_entity_descriptions(self):
+        """Return the entity descriptions for the offline ev."""
+        entity_descriptions = []
+        for ev in self._offline_evs:
+            entity_descriptions.append(
+                SensorEntityDescription(
+                    key=f"offline_ev_{ev['brandAndModel']}_soc",
+                    name=f"{ev['brandAndModel']} soc",
+                    native_unit_of_measurement=PERCENTAGE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                )
+            )
+        return entity_descriptions
 
     @property
     def chargers_entity_descriptions(self):
