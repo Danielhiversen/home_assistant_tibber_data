@@ -6,6 +6,8 @@ import logging
 
 import tibber
 
+TIBBER_API = "https://app.tibber.com/v4/gql"
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -152,7 +154,7 @@ async def get_tibber_chargers_data(
             }
         ),
     }
-    resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
+    resp = await session.post(TIBBER_API, **post_args)
     meta_data = (await resp.json())["data"]["me"]["home"]["evCharger"]
 
     # pylint: disable=consider-using-f-string
@@ -173,9 +175,68 @@ async def get_tibber_chargers_data(
             }
         ),
     }
-    resp = await session.post("https://app.tibber.com/v4/gql", **post_args)
+    resp = await session.post(TIBBER_API, **post_args)
     charger_consumption = (await resp.json())["data"]["me"]["home"][
         "evChargerConsumption"
     ]
 
     return {"meta_data": meta_data, "charger_consumption": charger_consumption}
+
+
+async def get_tibber_offline_evs_data(
+    session,
+    token: str,
+):
+    """Get tibber device data."""
+    post_args = {
+        "headers": {"content-type": "application/json", "cookie": f"token={token}"},
+        "data": json.dumps(
+            {
+                "variables": {},
+                "query": "{ me { myVehicles { vehicles { title id detailsScreen { settings { key value } } } } } }",
+            }
+        ),
+    }
+    resp = await session.post(TIBBER_API, **post_args)
+
+    data = (await resp.json())["data"]["me"]["myVehicles"]["vehicles"]
+
+    res = []
+    for ev_raw in data:
+        ev_dev = {
+            "id": ev_raw["id"],
+        }
+        settings = ev_raw["detailsScreen"]["settings"]
+        for setting in settings:
+            try:
+                val = float(setting["value"])
+            except ValueError:
+                val = setting["value"]
+            ev_dev[setting["key"]] = val
+        res.append(ev_dev)
+    return res
+
+
+async def update_offline_evs_soc(
+    session,
+    token: str,
+    device_id: str,
+    soc: float,
+):
+    """Get tibber device data."""
+    post_args = {
+        "headers": {"content-type": "application/json", "cookie": f"token={token}"},
+        "data": json.dumps(
+            {
+                "variables": {},
+                "query": 'mutation { me { updateVehicle( id: "'
+                + device_id
+                + '" settings: [{ key: "batteryLevel", value: "'
+                + str(soc)
+                + '" }] ) { vehicles { id title } } } }',
+            }
+        ),
+    }
+    resp = await session.post(TIBBER_API, **post_args)
+    print(resp)
+    return True
