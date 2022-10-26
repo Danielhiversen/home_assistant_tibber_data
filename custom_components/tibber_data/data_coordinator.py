@@ -42,6 +42,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             update_interval=datetime.timedelta(seconds=15),
         )
         self.tibber_home: tibber.TibberHome = tibber_home
+        tibber_home._timeout = 30
         self.email = email
         self._password = password
         self._token = None
