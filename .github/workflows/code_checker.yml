@@ -2,36 +2,33 @@ name: Code-checker
 
 on:
   workflow_run:
-    workflows:
-      - black
-    types:
-      - completed
+     workflows: ["black"]
+     types: [completed]
 
 jobs:
-  on-success:
-    validate:
-      runs-on: "ubuntu-latest"
-      strategy:
-        matrix:
-          python-version:
-            - "3.9"
-            - "3.10"
-      env:
-        SRC_FOLDER: custom_components/tibber_data
-      steps:
-        - uses: actions/checkout@v2
-        - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v4
-          with:
-            python-version: ${{ matrix.python-version }}
-            cache: 'pip'
-        - name: Install depencency
-          run: |
-            pip install dlint flakeheaven flake8-deprecated flake8-executable pylint mypy homeassistant pyTibber
-        - name: Flake8 Code Linter
-          run: flakeheaven lint $SRC_FOLDER
-  #      - name: Mypy Code Linter
-  #        run: mypy $SRC_FOLDER
-        - name: Pylint Code Linter
-          run: pylint $SRC_FOLDER
+  validate:
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        python-version:
+          - "3.9"
+          - "3.10"
+    env:
+      SRC_FOLDER: custom_components/tibber_data
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - name: Install depencency
+        run: |
+          pip install dlint flakeheaven flake8-deprecated flake8-executable pylint mypy homeassistant pyTibber
+      - name: Flake8 Code Linter
+        run: flakeheaven lint $SRC_FOLDER
+#      - name: Mypy Code Linter
+#        run: mypy $SRC_FOLDER
+      - name: Pylint Code Linter
+        run: pylint $SRC_FOLDER
 
