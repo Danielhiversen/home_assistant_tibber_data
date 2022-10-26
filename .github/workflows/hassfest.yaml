@@ -1,8 +1,11 @@
 name: Validate with hassfest
 
 on:
-  push:
-  pull_request:
+  workflow_run:
+    workflows:
+      - Code-checker
+    types:
+      - completed
   schedule:
     - cron: "0 0 * * *"
 
