@@ -35,6 +35,7 @@ jobs:
             git config --global user.name 'Daniel Hoyer'
             git config --global user.email 'mail@dahoiv.net'
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+            git fetch --depth=1;
             git checkout $GITHUB_HEAD_REF
             git commit -am "fixup! Format Python code with isort"
             git push
@@ -50,6 +51,7 @@ jobs:
             git config --global user.name 'Daniel Hoyer'
             git config --global user.email 'mail@dahoiv.net'
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+            git fetch --depth=1;
             git checkout $GITHUB_HEAD_REF
             git commit -am "fixup! Format Python code with black"
             git push

@@ -141,8 +141,8 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         if not self._offline_evs:
             return now + datetime.timedelta(hours=2)
 
-        for ev in self._offline_evs:
-            data[f"offline_ev_{ev['brandAndModel']}_soc"] = ev["batteryLevel"]
+        for ev_device in self._offline_evs:
+            data[f"offline_ev_{ev_device['brandAndModel']}_soc"] = ev_device["batteryLevel"]
         return now + datetime.timedelta(minutes=30)
 
     async def _get_charger_data_tibber(self, data, now):
