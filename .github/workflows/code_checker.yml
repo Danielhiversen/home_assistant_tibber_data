@@ -74,8 +74,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-        ref: ${{ needs.black.outputs.new_sha }}
-        fetch-depth: 0
+          ref: ${{ needs.black.outputs.new_sha }}
+          fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
