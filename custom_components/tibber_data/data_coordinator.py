@@ -349,7 +349,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         else:
             next_update = min(
                 next_update,
-                now.replace(hour=13, minute=1, second=0, microsecond=0),
+                now.replace(hour=13, minute=0, second=0, microsecond=0),
             )
 
         _total_price = 0

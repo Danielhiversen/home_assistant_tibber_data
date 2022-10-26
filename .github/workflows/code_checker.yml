@@ -37,7 +37,6 @@ jobs:
             git checkout $GITHUB_HEAD_REF
             git commit -am "fixup! Format Python code with isort"
             git push
-
       - name: black
         run: black $SRC_FOLDER
       - name: Check for modified files
