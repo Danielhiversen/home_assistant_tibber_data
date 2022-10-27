@@ -4,6 +4,7 @@ import logging
 from random import randrange
 from typing import List, Set
 
+import aiohttp
 import tibber
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -11,7 +12,6 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import ENERGY_KILO_WATT_HOUR, PERCENTAGE
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
@@ -42,12 +42,15 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             update_interval=datetime.timedelta(seconds=15),
         )
         self.tibber_home: tibber.TibberHome = tibber_home
+        tibber_home._timeout = 30
         self.email = email
         self._password = password
         self._token = None
         self._chargers: List[str] = []
         self._offline_evs: List[dict] = []
         self._month_consumption: Set[Consumption] = set()
+
+        self._session = aiohttp.ClientSession()
 
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
         self._update_functions = {
@@ -84,14 +87,15 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
     async def _get_data_tibber(self, data, now):
         """Update data via Tibber API."""
-        session = async_get_clientsession(self.hass)
         if self._token is None:
-            self._token = await get_tibber_token(session, self.email, self._password)
+            self._token = await get_tibber_token(
+                self._session, self.email, self._password
+            )
             if self._token is None:
                 return now + datetime.timedelta(minutes=2)
 
         try:
-            _data = await get_tibber_data(session, self._token)
+            _data = await get_tibber_data(self._session, self._token)
         except Exception:  # pylint: disable=broad-except
             _LOGGER.exception("Error fetching Tibber data")
             self._token = None
@@ -123,14 +127,17 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
     async def _get_offline_evs_data_tibber(self, data, now):
         """Update offline ev data via Tibber API."""
-        session = async_get_clientsession(self.hass)
         if self._token is None:
-            self._token = await get_tibber_token(session, self.email, self._password)
+            self._token = await get_tibber_token(
+                self._session, self.email, self._password
+            )
             if self._token is None:
                 return now + datetime.timedelta(minutes=2)
 
         try:
-            self._offline_evs = await get_tibber_offline_evs_data(session, self._token)
+            self._offline_evs = await get_tibber_offline_evs_data(
+                self._session, self._token
+            )
         except Exception:  # pylint: disable=broad-except
             _LOGGER.exception("Error fetching Tibber offline ev data")
             self._token = None
@@ -147,15 +154,16 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
     async def _get_charger_data_tibber(self, data, now):
         """Update charger data via Tibber API."""
-        session = async_get_clientsession(self.hass)
         if self._token is None:
-            self._token = await get_tibber_token(session, self.email, self._password)
+            self._token = await get_tibber_token(
+                self._session, self.email, self._password
+            )
             if self._token is None:
                 return now + datetime.timedelta(minutes=2)
 
         try:
             self._chargers = await get_tibber_chargers(
-                session, self._token, self.tibber_home.home_id
+                self._session, self._token, self.tibber_home.home_id
             )
         except Exception:  # pylint: disable=broad-except
             _LOGGER.exception("Error fetching Tibber charger data")
@@ -167,7 +175,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
         for charger in self._chargers:
             charger_data = await get_tibber_chargers_data(
-                session,
+                self._session,
                 self._token,
                 self.tibber_home.home_id,
                 charger,
@@ -349,7 +357,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         else:
             next_update = min(
                 next_update,
-                now.replace(hour=13, minute=1, second=0, microsecond=0),
+                now.replace(hour=13, minute=0, second=0, microsecond=0),
             )
 
         _total_price = 0
