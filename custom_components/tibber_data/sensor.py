@@ -1,4 +1,5 @@
 """Tibber data"""
+import asyncio
 import datetime
 import logging
 from typing import cast
@@ -16,6 +17,18 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, config):
+    """Set up the Tibber sensor."""
+    while True:
+        try:
+            await _setup(hass, _, async_add_entities, config)
+        except Exception:
+            _LOGGER.exception("Error setting up Tibber platform")
+            await asyncio.sleep(60)
+        else:
+            return
+
+
+async def _setup(hass: HomeAssistant, _, async_add_entities, config):
     """Set up the Tibber sensor."""
     hass.data[DOMAIN] = {}
     dev = []
@@ -60,7 +73,6 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
                 dev.append(
                     TibberDataSensor(coordinator, offline_ev_entity_descriptions)
                 )
-
     async_add_entities(dev)
 
 
