@@ -213,6 +213,8 @@ async def get_tibber_offline_evs_data(
             except ValueError:
                 val = setting["value"]
             ev_dev[setting["key"]] = val
+        if ev_dev.get("batteryLevel") is None or ev_dev.get("brandAndModel") is None:
+            continue
         res.append(ev_dev)
     return res
 
