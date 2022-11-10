@@ -147,9 +147,10 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             return now + datetime.timedelta(hours=2)
 
         for ev_device in self._offline_evs:
-            data[f"offline_ev_{ev_device['brandAndModel']}_soc"] = ev_device[
-                "batteryLevel"
-            ]
+            if "batteryLevel" in ev_device:
+                data[f"offline_ev_{ev_device['brandAndModel']}_soc"] = ev_device[
+                    "batteryLevel"
+                ]
         return now + datetime.timedelta(minutes=30)
 
     async def _get_charger_data_tibber(self, data, now):
@@ -382,7 +383,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 total_cons_day += cons.cons
         data["monthly_avg_price"] = total_price / n_price if n_price > 0 else None
         data["est_subsidy"] = (
-            (_total_price / _n_price - 0.7 * 1.25) * 0.9 if _n_price > 0 else None
+            max(0, (_total_price / _n_price - 0.7 * 1.25) * 0.9)
+            if _n_price > 0
+            else None
         )
         data["customer_avg_price"] = total_cost / total_cons if total_cons > 0 else None
 
