@@ -129,7 +129,7 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
         native_value = None
         price_info = self.coordinator.data.get("hourly_prices", {})
         # check if data has grid prices and add to attributes if available
-        if price_info[1]["gridPrice"]:
+        if price_info[1].get("gridPrice"):
             # find current price
             now_hour = dt_util.now().replace(minute=0, second=0, microsecond=0)
             for i in price_info:
