@@ -21,7 +21,6 @@ You get the following sensors:
 * Daily accumulated cost with subsidy (only available if you have a real-time meter, Tibber Pulse)
 * Monthly production profit
 * Daily production profit (only available if you have a real-time meter, Tibber Pulse)
-* Daily production profit (only available if you have a real-time meter, Tibber Pulse)
 * Yearly consumption
 * Monthly consumption compared to last year, this month consumption compared to same days last year
 
