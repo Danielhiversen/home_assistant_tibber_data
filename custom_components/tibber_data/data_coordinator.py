@@ -1,4 +1,5 @@
 """Data coordinator for Tibber."""
+import asyncio
 import datetime
 import logging
 from random import randrange
@@ -74,15 +75,21 @@ class TibberDataCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via API."""
         now = dt_util.now(dt_util.DEFAULT_TIME_ZONE)
+
+        async def _update(_data, _func):
+            try:
+                self._update_functions[_func] = await _func(_data, now)
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Error fetching Tibber data")
+                self._update_functions[_func] = now + datetime.timedelta(minutes=2)
+
         data = {} if self.data is None else self.data
+        tasks = []
         for func, next_update in self._update_functions.copy().items():
             _LOGGER.debug("Updating Tibber data %s %s", func, next_update)
             if now >= next_update:
-                try:
-                    self._update_functions[func] = await func(data, now)
-                except Exception:  # pylint: disable=broad-except
-                    _LOGGER.exception("Error fetching Tibber data")
-                    self._update_functions[func] = now + datetime.timedelta(minutes=2)
+                tasks.append(_update(data, func))
+        await asyncio.gather(*tasks)
         return data
 
     async def _get_data_tibber(self, data, now):
@@ -322,7 +329,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 next_update = now + datetime.timedelta(minutes=2)
         elif consumption_yesterday_available:
             next_update = (now + datetime.timedelta(days=1)).replace(
-                hour=3, minute=0, second=0, microsecond=0
+                hour=0, minute=0, second=0, microsecond=0
             )
         else:
             next_update = now + datetime.timedelta(minutes=15)
@@ -399,6 +406,42 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             if (data["est_subsidy"] is not None and total_cost is not None)
             else None
         )
+
+        yearly_cost = 0
+        yearly_cons = 0
+        for _hour in cons_data:
+            date = dt_util.parse_datetime(_hour.get("from"))
+            if not (date.year == now.year):
+                continue
+            if _hour.get("consumption") is not None:
+                yearly_cons += _hour["consumption"]
+            if _hour.get("cost") is not None:
+                yearly_cost += _hour["cost"]
+        data["yearly_cost"] = yearly_cost
+        data["yearly_cons"] = yearly_cons
+
+        month_cons = 0
+        month_cons_ts = []
+        for _hour in cons_data:
+            date = dt_util.parse_datetime(_hour.get("from"))
+            if not (date.year == now.year and date.month == now.month):
+                continue
+            if _hour.get("consumption") is not None:
+                month_cons += _hour["consumption"]
+                month_cons_ts.append(date)
+        data["month_cons"] = month_cons
+        prev_year_month_cons = 0
+        for _hour in cons_data:
+            if _hour.get("consumption") is None:
+                continue
+            date = dt_util.parse_datetime(_hour.get("from"))
+            _date = date.replace(year=date.year + 1)
+            if _date in month_cons_ts:
+                prev_year_month_cons += _hour["consumption"]
+
+        data["prev_year_month_cons"] = prev_year_month_cons
+        data["compare_cons"] = month_cons - prev_year_month_cons
+
         return next_update
 
     @property
