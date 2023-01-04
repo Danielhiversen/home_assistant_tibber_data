@@ -23,7 +23,7 @@ You get the following sensors:
 * Daily production profit (only available if you have a real-time meter, Tibber Pulse)
 * Yearly cost
 * Yearly consumption
-* Monthly consumption compared to last year, this month consumption compared to same days last year
+* Monthly consumption compared to last year, this month consumption compared to same hours last year
 
 Experimental and requires additional configuration:
 * Grid price (Only if your grid company is supported by Tibber)
