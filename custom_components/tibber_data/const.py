@@ -44,6 +44,26 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
+        key="yearly_cost",
+        name="Yearly cost",
+        device_class=SensorDeviceClass.MONETARY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    SensorEntityDescription(
+        key="yearly_cons",
+        name="Yearly consumption",
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+    ),
+    SensorEntityDescription(
+        key="compare_cons",
+        name="Monthly consumption compared to last year",
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.ENERGY,
+        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+    ),
+    SensorEntityDescription(
         key="monthly_cost_with_subsidy",
         name="Monthly cost with subsidy",
         device_class=SensorDeviceClass.MONETARY,
