@@ -28,6 +28,8 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
                     await home.update_info()
                 except Exception:
                     _LOGGER.error("Error", exc_info=True)
+                    if k == 19:
+                        raise
                     await asyncio.sleep(min(60, 2**k))
                 else:
                     break
