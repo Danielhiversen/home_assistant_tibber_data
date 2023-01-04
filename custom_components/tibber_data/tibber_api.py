@@ -20,7 +20,7 @@ async def get_historic_data(
             {{
               viewer {{
                 home(id: "{0}") {{
-                  consumption(resolution: HOURLY, last: 744, before:"{1}") {{
+                  consumption(resolution: HOURLY, last: 9600, before:"{1}") {{
                     nodes {{
                       consumption
                       cost

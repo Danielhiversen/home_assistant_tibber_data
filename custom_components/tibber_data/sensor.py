@@ -1,4 +1,5 @@
 """Tibber data"""
+import asyncio
 import datetime
 import logging
 from typing import cast
@@ -22,7 +23,17 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
     for home in hass.data["tibber"].get_homes(only_active=True):
         home = cast(tibber.TibberHome, home)
         if not home.info:
-            await home.update_info()
+            for k in range(20):
+                try:
+                    await home.update_info()
+                except Exception:
+                    _LOGGER.error("Error", exc_info=True)
+                    if k == 19:
+                        raise
+                    await asyncio.sleep(min(60, 2**k))
+                else:
+                    break
+
         coordinator = TibberDataCoordinator(
             hass, home, config.get("email"), config.get("password")
         )
@@ -113,6 +124,14 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             self._attr_extra_state_attributes = self.coordinator.data.get(
                 "peak_consumption_attrs"
             )
+        elif self.entity_description.key == "compare_cons":
+            self._attr_extra_state_attributes = {}
+            self._attr_extra_state_attributes[
+                "Month consumption"
+            ] = self.coordinator.data.get("month_cons")
+            self._attr_extra_state_attributes[
+                "Month consumption last year"
+            ] = self.coordinator.data.get("prev_year_month_cons")
 
         self.async_write_ha_state()
 
