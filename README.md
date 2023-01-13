@@ -14,10 +14,10 @@ If you use this link to signup for Tibber, you get 50 euro to buy smart home pro
 You get the following sensors:
 * Monthly avg price
 * Monthly avg customer price (Your price calculated as your consumption divided by your cost this month)
-* Estimated subsidy
-* Estimated price with subsidy
+* Estimated subsidy (Norway)
+* Estimated price with subsidy (Norway)
 * Average of 3 highest hourly consumption (from 3 different days)
-* Monthly accumulated cost with subsidy
+* Monthly accumulated cost with subsidy (Norway)
 * Daily accumulated cost with subsidy (only available if you have a real-time meter, Tibber Pulse)
 * Monthly production profit
 * Daily production profit (only available if you have a real-time meter, Tibber Pulse)
