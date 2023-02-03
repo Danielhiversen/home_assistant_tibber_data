@@ -20,12 +20,12 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="monthly_avg_price",
         name="Monthly avg price",
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
     ),
     SensorEntityDescription(
         key="customer_avg_price",
         name="Monthly avg customer price",
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
     ),
     SensorEntityDescription(
         key="est_subsidy",
@@ -41,13 +41,13 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         key="daily_cost_with_subsidy",
         name="Daily cost with subsidy",
         device_class=SensorDeviceClass.MONETARY,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
     ),
     SensorEntityDescription(
         key="yearly_cost",
         name="Yearly cost",
         device_class=SensorDeviceClass.MONETARY,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
     ),
     SensorEntityDescription(
         key="yearly_cons",
@@ -67,19 +67,19 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         key="monthly_cost_with_subsidy",
         name="Monthly cost with subsidy",
         device_class=SensorDeviceClass.MONETARY,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
     ),
     SensorEntityDescription(
         key="production_profit_day",
         name="Daily production profit",
         device_class=SensorDeviceClass.MONETARY,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
     ),
     SensorEntityDescription(
         key="production_profit_month",
         name="Monthly production profit",
         device_class=SensorDeviceClass.MONETARY,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
     ),
 )
 TIBBER_APP_SENSORS: tuple[SensorEntityDescription, ...] = (

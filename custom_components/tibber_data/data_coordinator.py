@@ -469,7 +469,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     key=f"charger_{charger}_cost_day",
                     name="Charger cost day",
                     device_class=SensorDeviceClass.MONETARY,
-                    state_class=SensorStateClass.MEASUREMENT,
+                    state_class=SensorStateClass.TOTAL,
                 )
             )
             entity_descriptions.append(
@@ -477,7 +477,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     key=f"charger_{charger}_cost_month",
                     name="Charger cost month",
                     device_class=SensorDeviceClass.MONETARY,
-                    state_class=SensorStateClass.MEASUREMENT,
+                    state_class=SensorStateClass.TOTAL,
                 )
             )
             entity_descriptions.append(
