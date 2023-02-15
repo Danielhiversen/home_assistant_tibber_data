@@ -4,10 +4,10 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 
 Display Tibber data sensors.
-Tibber is available in Germany, Norway and Sweden
+Tibber is available in Germany, Norway and Sweden.
 
 
-If you use this link to signup for Tibber, you get 50 euro to buy smart home products in the Tibber store: https://invite.tibber.com/6fd7a447
+If you use this link to sign up for Tibber, you get 50 euro to buy smart home products in the Tibber store: https://invite.tibber.com/6fd7a447
 
 [Buy me a coffee :)](http://paypal.me/dahoiv)
 
@@ -55,7 +55,7 @@ Optional for extra sensors:
 
 ```
 tibber_data:
-  email: Your email registred at Tibber
+  email: Your email registered at Tibber
   password: Your Tibber password
 ```
 
