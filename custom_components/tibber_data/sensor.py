@@ -25,10 +25,9 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
         home = cast(tibber.TibberHome, home)
         if not home.info:
             for k in range(20):
-                # pylint: disable=broad-exception-raised
                 try:
                     await home.update_info()
-                except Exception:
+                except Exception:  # pylint: disable=broad-exception-caught
                     _LOGGER.error("Error", exc_info=True)
                     if k == 19:
                         raise
