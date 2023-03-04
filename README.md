@@ -4,20 +4,20 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 
 Display Tibber data sensors.
-Tibber is available in Germany, Norway and Sweden
+Tibber is available in Germany, Norway and Sweden.
 
 
-If you use this link to signup for Tibber, you get 50 euro to buy smart home products in the Tibber store: https://invite.tibber.com/6fd7a447
+If you use this link to sign up for Tibber, you get 50 euro to buy smart home products in the Tibber store: https://invite.tibber.com/6fd7a447
 
 [Buy me a coffee :)](http://paypal.me/dahoiv)
 
 You get the following sensors:
 * Monthly avg price
 * Monthly avg customer price (Your price calculated as your consumption divided by your cost this month)
-* Estimated subsidy
-* Estimated price with subsidy
+* Estimated subsidy (Norway)
+* Estimated price with subsidy (Norway)
 * Average of 3 highest hourly consumption (from 3 different days)
-* Monthly accumulated cost with subsidy
+* Monthly accumulated cost with subsidy (Norway)
 * Daily accumulated cost with subsidy (only available if you have a real-time meter, Tibber Pulse)
 * Monthly production profit
 * Daily production profit (only available if you have a real-time meter, Tibber Pulse)
@@ -55,7 +55,7 @@ Optional for extra sensors:
 
 ```
 tibber_data:
-  email: Your email registred at Tibber
+  email: Your email registered at Tibber
   password: Your Tibber password
 ```
 
