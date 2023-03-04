@@ -1,12 +1,12 @@
 {
+    "domain": "tibber_data",
+    "name": "Tibber data",
     "after_dependencies": ["tibber"],
     "codeowners": ["@danielhiversen"],
     "config_flow": false,
     "documentation": "https://github.com/Danielhiversen/home_assistant_tibber_data",
-    "domain": "tibber_data",
     "iot_class": "cloud_polling",
     "issue_tracker": "https://github.com/Danielhiversen/home_assistant_tibber_data/issues",
-    "name": "Tibber data",
     "requirements": ["pyTibber>=0.25.2"],
     "version": "0.6.0"
 }
