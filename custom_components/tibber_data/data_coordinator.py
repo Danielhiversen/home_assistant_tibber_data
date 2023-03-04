@@ -411,7 +411,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         yearly_cons = 0
         for _hour in cons_data:
             date = dt_util.parse_datetime(_hour.get("from"))
-            if not (date.year == now.year):
+            if not date.year == now.year:
                 continue
             if _hour.get("consumption") is not None:
                 yearly_cons += _hour["consumption"]
