@@ -18,6 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, config):
     """Set up the Tibber sensor."""
+    # pylint: disable=too-many-branches
     hass.data[DOMAIN] = {}
     dev = []
     for home in hass.data["tibber"].get_homes(only_active=True):
@@ -26,7 +27,7 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
             for k in range(20):
                 try:
                     await home.update_info()
-                except Exception:
+                except Exception:  # pylint: disable=broad-exception-caught
                     _LOGGER.error("Error", exc_info=True)
                     if k == 19:
                         raise
