@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.9"
+          - "3.11"
     env:
       SRC_FOLDER: custom_components/tibber_data
     steps:
@@ -67,7 +67,6 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - "3.9"
           - "3.10"
           - "3.11"
     env:
