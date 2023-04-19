@@ -92,8 +92,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         await asyncio.gather(*tasks)
         data["token"] = self._token
         self.hass.data[DOMAIN][self.tibber_home.home_id] = data
-        print(self.tibber_home.home_id)
-        print("token")
         return data
 
     async def _get_data_tibber(self, data, now):
