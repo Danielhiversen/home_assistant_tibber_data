@@ -212,7 +212,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[f"charger_{charger}_cost_month"] = charging_cost_month
             data[f"charger_{charger}_consumption_day"] = charging_consumption_day
             data[f"charger_{charger}_consumption_month"] = charging_consumption_month
-            for key, val in charger_data["meta_data"]['settingsScreen']['settings'].items():
+            for setting in charger_data["meta_data"]['settingsScreen']['settings']:
+                key = setting['key']
+                val = setting['value']
                 if key == "schedule.isEnabled":
                     data[f"charger_{charger}_sc_enabled"] = val.lower() == "on"
                 elif key == "departureTimes.sunday":
@@ -243,9 +245,8 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[
                 f"charger_{charger}_consumption_month_name"
             ] = f"{charger_data['meta_data']['name']} consumption month"
-
         return now.replace(minute=1, second=1, microsecond=0) + datetime.timedelta(
-            hours=1
+            minutes=15
         )
 
     async def _get_production_data(self, data, now):
