@@ -212,9 +212,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[f"charger_{charger}_cost_month"] = charging_cost_month
             data[f"charger_{charger}_consumption_day"] = charging_consumption_day
             data[f"charger_{charger}_consumption_month"] = charging_consumption_month
-            for setting in charger_data["meta_data"]['settingsScreen']['settings']:
-                key = setting['key']
-                val = setting['value']
+            for setting in charger_data["meta_data"]["settingsScreen"]["settings"]:
+                key = setting["key"]
+                val = setting["value"]
                 if key == "schedule.isEnabled":
                     data[f"charger_{charger}_sc_enabled"] = val.lower() == "on"
                 elif key == "departureTimes.sunday":
