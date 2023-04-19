@@ -90,6 +90,10 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             if now >= next_update:
                 tasks.append(_update(data, func))
         await asyncio.gather(*tasks)
+        data["token"] = self._token
+        self.hass.data[DOMAIN][self.tibber_home.home_id] = data
+        print(self.tibber_home.home_id)
+        print("token")
         return data
 
     async def _get_data_tibber(self, data, now):
@@ -209,6 +213,25 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[f"charger_{charger}_cost_day"] = charging_cost_day
             data[f"charger_{charger}_cost_month"] = charging_cost_month
             data[f"charger_{charger}_consumption_day"] = charging_consumption_day
+            data[f"charger_{charger}_consumption_month"] = charging_consumption_month
+            for key, val in charger_data["meta_data"]['settingsScreen']['settings'].items():
+                if key == "schedule.isEnabled":
+                    data[f"charger_{charger}_sc_enabled"] = val.lower() == "on"
+                elif key == "departureTimes.sunday":
+                    data[f"charger_{charger}_sunday_departure_time"] = val
+                elif key == "departureTimes.monday":
+                    data[f"charger_{charger}_monday_departure_time"] = val
+                elif key == "departureTimes.tuesday":
+                    data[f"charger_{charger}_tuesday_departure_time"] = val
+                elif key == "departureTimes.wednesday":
+                    data[f"charger_{charger}_wednesday_departure_time"] = val
+                elif key == "departureTimes.thursday":
+                    data[f"charger_{charger}_thursday_departure_time"] = val
+                elif key == "departureTimes.friday":
+                    data[f"charger_{charger}_friday_departure_time"] = val
+                elif key == "departureTimes.saturday":
+                    data[f"charger_{charger}_saturday_departure_time"] = val
+
             data[f"charger_{charger}_consumption_month"] = charging_consumption_month
             data[
                 f"charger_{charger}_cost_day_name"
