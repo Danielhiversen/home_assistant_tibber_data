@@ -1,44 +1,23 @@
 """Tibber data"""
-import asyncio
 import datetime
 import logging
-from typing import cast
 
-import tibber
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN, SENSORS, TIBBER_APP_SENSORS
-from .data_coordinator import TibberDataCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, config):
     """Set up the Tibber sensor."""
-    # pylint: disable=too-many-branches
-    hass.data[DOMAIN] = {}
+    coordinator = hass.data[DOMAIN]["coordinator"]
+
     dev = []
     for home in hass.data["tibber"].get_homes(only_active=True):
-        home = cast(tibber.TibberHome, home)
-        if not home.info:
-            for k in range(20):
-                try:
-                    await home.update_info()
-                except Exception:  # pylint: disable=broad-exception-caught
-                    _LOGGER.error("Error", exc_info=True)
-                    if k == 19:
-                        raise
-                    await asyncio.sleep(min(60, 2**k))
-                else:
-                    break
-
-        coordinator = TibberDataCoordinator(
-            hass, home, config.get("email"), config.get("password")
-        )
-        await coordinator.async_request_refresh()
         for entity_description in SENSORS:
             if (
                 entity_description.key in ("daily_cost_with_subsidy",)

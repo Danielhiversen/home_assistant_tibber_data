@@ -150,7 +150,8 @@ async def get_tibber_chargers_data(
                 + home_id
                 + '") { evCharger( id: "'
                 + charger_id
-                + '" ) { name lastSeen  settingsScreen{settings{key value}} state { cableIsLocked isCharging permanentCableLock }} } } }',
+                + '" ) { name lastSeen  settingsScreen{settings{key value}} state'
+                + " { cableIsLocked isCharging permanentCableLock }} } } }",
             }
         ),
     }
@@ -240,5 +241,5 @@ async def update_offline_evs_soc(
             }
         ),
     }
-    resp = await session.post(TIBBER_API, **post_args)
+    await session.post(TIBBER_API, **post_args)
     return True
