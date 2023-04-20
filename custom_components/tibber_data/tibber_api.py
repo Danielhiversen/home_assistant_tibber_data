@@ -151,7 +151,7 @@ async def get_tibber_chargers_data(
                 + '") { evCharger( id: "'
                 + charger_id
                 + '" ) { name lastSeen  settingsScreen{settings{key value}} state'
-                + ' { cableIsLocked isCharging permanentCableLock }} } } }',
+                + " { cableIsLocked isCharging permanentCableLock }} } } }",
             }
         ),
     }
