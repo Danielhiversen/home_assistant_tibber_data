@@ -165,7 +165,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
     async def _get_charger_data_tibber(self, data, now):
         """Update charger data via Tibber API."""
-        print("get_charger_data_tibber")
+        # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         if self._token is None:
             self._token = await get_tibber_token(
                 self._session, self.email, self._password
