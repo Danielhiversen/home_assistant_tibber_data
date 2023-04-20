@@ -240,5 +240,5 @@ async def update_offline_evs_soc(
             }
         ),
     }
-    resp = await session.post(TIBBER_API, **post_args)
+    await session.post(TIBBER_API, **post_args)
     return True
