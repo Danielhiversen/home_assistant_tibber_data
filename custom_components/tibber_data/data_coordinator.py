@@ -86,7 +86,8 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         data = {} if self.data is None else self.data
         tasks = []
         for func, next_update in self._update_functions.copy().items():
-            _LOGGER.debug("Updating Tibber data %s %s", func, next_update)
+            print( now >= next_update, func, now, next_update)
+            _LOGGER.info("Updating Tibber data %s %s", func, next_update)
             if now >= next_update:
                 tasks.append(_update(data, func))
         await asyncio.gather(*tasks)
@@ -164,6 +165,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
     async def _get_charger_data_tibber(self, data, now):
         """Update charger data via Tibber API."""
+        print("get_charger_data_tibber")
         if self._token is None:
             self._token = await get_tibber_token(
                 self._session, self.email, self._password
@@ -245,7 +247,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[
                 f"charger_{charger}_consumption_month_name"
             ] = f"{charger_data['meta_data']['name']} consumption month"
-        return now.replace(minute=1, second=1, microsecond=0) + datetime.timedelta(
+        return now + datetime.timedelta(
             minutes=15
         )
 
@@ -480,6 +482,11 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 )
             )
         return entity_descriptions
+
+    @property
+    def chargers(self):
+        """Return the chargers."""
+        return self._chargers
 
     @property
     def chargers_entity_descriptions(self):

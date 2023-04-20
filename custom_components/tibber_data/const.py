@@ -5,9 +5,10 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import ENERGY_KILO_WATT_HOUR
+from homeassistant.const import ENERGY_KILO_WATT_HOUR, Platform
 
 DOMAIN = "tibber_data"
+PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 
 SENSORS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
