@@ -28,7 +28,7 @@ async def async_setup(hass, config):
                     _LOGGER.error("Error", exc_info=True)
                     if k == 19:
                         raise
-                    await asyncio.sleep(min(60, 2 ** k))
+                    await asyncio.sleep(min(60, 2**k))
                 else:
                     break
 
@@ -41,7 +41,9 @@ async def async_setup(hass, config):
 
     for component in PLATFORMS:
         hass.async_create_task(
-            discovery.async_load_platform(hass, component, DOMAIN, config[DOMAIN], config)
+            discovery.async_load_platform(
+                hass, component, DOMAIN, config[DOMAIN], config
+            )
         )
 
     return True

@@ -21,13 +21,21 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
     coordinator = hass.data[DOMAIN]["coordinator"]
     dev = []
     for charger in coordinator.chargers:
-        dev.append(TibberDataBinarySensor(coordinator, BinarySensorEntityDescription(key=f"charger_{charger}_sc_enabled",
-                                                                                 name=f"Smart charging enabled {charger}",
-                                                                                     )))
+        dev.append(
+            TibberDataBinarySensor(
+                coordinator,
+                BinarySensorEntityDescription(
+                    key=f"charger_{charger}_sc_enabled",
+                    name=f"Smart charging enabled {charger}",
+                ),
+            )
+        )
     async_add_entities(dev)
 
 
-class TibberDataBinarySensor(BinarySensorEntity, CoordinatorEntity[TibberDataCoordinator]):
+class TibberDataBinarySensor(
+    BinarySensorEntity, CoordinatorEntity[TibberDataCoordinator]
+):
     """Representation of a Tibber binary sensor."""
 
     def __init__(self, coordinator, entity_description):

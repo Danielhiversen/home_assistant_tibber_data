@@ -86,7 +86,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         data = {} if self.data is None else self.data
         tasks = []
         for func, next_update in self._update_functions.copy().items():
-            print( now >= next_update, func, now, next_update)
+            print(now >= next_update, func, now, next_update)
             _LOGGER.info("Updating Tibber data %s %s", func, next_update)
             if now >= next_update:
                 tasks.append(_update(data, func))
@@ -247,9 +247,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[
                 f"charger_{charger}_consumption_month_name"
             ] = f"{charger_data['meta_data']['name']} consumption month"
-        return now + datetime.timedelta(
-            minutes=15
-        )
+        return now + datetime.timedelta(minutes=15)
 
     async def _get_production_data(self, data, now):
         """Get production data from Tibber."""
