@@ -255,7 +255,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             ] = f"{_name} consumption month"
             data[f"charger_{charger}_max_current_charger_name"] = f"{_name} max current charger"
             data[f"charger_{charger}_max_circuit_power_name"] = f"{_name} max circuit power"
-            data[f"charger_{charger}_is_charging_name"] = f"{_name} is charging"
         return now + datetime.timedelta(minutes=15)
 
     async def _get_production_data(self, data, now):
