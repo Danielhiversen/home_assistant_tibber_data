@@ -12,7 +12,11 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import ENERGY_KILO_WATT_HOUR, PERCENTAGE
+from homeassistant.const import (
+    ELECTRIC_CURRENT_AMPERE,
+    ENERGY_KILO_WATT_HOUR,
+    PERCENTAGE,
+)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
@@ -52,6 +56,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self._month_consumption: Set[Consumption] = set()
 
         self._session = aiohttp.ClientSession()
+        self.charger_name = {}
 
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
         self._update_functions = {
@@ -86,7 +91,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         data = {} if self.data is None else self.data
         tasks = []
         for func, next_update in self._update_functions.copy().items():
-            print(now >= next_update, func, now, next_update)
             _LOGGER.info("Updating Tibber data %s %s", func, next_update)
             if now >= next_update:
                 tasks.append(_update(data, func))
@@ -214,6 +218,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[f"charger_{charger}_cost_month"] = charging_cost_month
             data[f"charger_{charger}_consumption_day"] = charging_consumption_day
             data[f"charger_{charger}_consumption_month"] = charging_consumption_month
+            data[f"charger_{charger}_is_charging"] = charger_data["meta_data"]["state"][
+                "isCharging"
+            ]
             for setting in charger_data["meta_data"]["settingsScreen"]["settings"]:
                 key = setting["key"]
                 val = setting["value"]
@@ -233,20 +240,25 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     data[f"charger_{charger}_friday_departure_time"] = val
                 elif key == "departureTimes.saturday":
                     data[f"charger_{charger}_saturday_departure_time"] = val
+                elif key == "maxCircuitPower":
+                    data[f"charger_{charger}_max_circuit_power"] = val
+                elif key == "maxCurrentCharger":
+                    data[f"charger_{charger}_max_current_charger"] = val
 
+            self.charger_name[charger] = _name = charger_data["meta_data"]["name"]
             data[f"charger_{charger}_consumption_month"] = charging_consumption_month
-            data[
-                f"charger_{charger}_cost_day_name"
-            ] = f"{charger_data['meta_data']['name']} cost day"
-            data[
-                f"charger_{charger}_cost_month_name"
-            ] = f"{charger_data['meta_data']['name']} cost month"
-            data[
-                f"charger_{charger}_consumption_day_name"
-            ] = f"{charger_data['meta_data']['name']} consumption day"
+            data[f"charger_{charger}_cost_day_name"] = f"{_name} cost day"
+            data[f"charger_{charger}_cost_month_name"] = f"{_name} cost month"
+            data[f"charger_{charger}_consumption_day_name"] = f"{_name} consumption day"
             data[
                 f"charger_{charger}_consumption_month_name"
-            ] = f"{charger_data['meta_data']['name']} consumption month"
+            ] = f"{_name} consumption month"
+            data[
+                f"charger_{charger}_max_current_charger_name"
+            ] = f"{_name} max current charger"
+            data[
+                f"charger_{charger}_max_circuit_power_name"
+            ] = f"{_name} max circuit power"
         return now + datetime.timedelta(minutes=15)
 
     async def _get_production_data(self, data, now):
@@ -521,6 +533,22 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     name="Charger consumption month",
                     device_class=SensorDeviceClass.ENERGY,
                     native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+                )
+            )
+            entity_descriptions.append(
+                SensorEntityDescription(
+                    key=f"charger_{charger}_max_circuit_power",
+                    name="Max circuit power",
+                    device_class=SensorDeviceClass.CURRENT,
+                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                )
+            )
+            entity_descriptions.append(
+                SensorEntityDescription(
+                    key=f"charger_{charger}_max_current_charger",
+                    name="Max current power",
+                    device_class=SensorDeviceClass.CURRENT,
+                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
                 )
             )
         return entity_descriptions
