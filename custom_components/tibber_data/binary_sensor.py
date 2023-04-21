@@ -26,7 +26,16 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
                 coordinator,
                 BinarySensorEntityDescription(
                     key=f"charger_{charger}_sc_enabled",
-                    name=f"Smart charging enabled {charger}",
+                    name=f"Smart charging enabled {coordinator.charger_name[charger]}",
+                ),
+            )
+        )
+        dev.append(
+            TibberDataBinarySensor(
+                coordinator,
+                BinarySensorEntityDescription(
+                    key=f"charger_{charger}_is_charging",
+                    name=f"Is charging {coordinator.charger_name[charger]}",
                 ),
             )
         )
