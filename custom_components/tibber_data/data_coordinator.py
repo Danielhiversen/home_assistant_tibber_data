@@ -69,6 +69,12 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         if self.tibber_home.has_production:
             self._update_functions[self._get_production_data] = _next_update
 
+    def reset_updater(self):
+        """Reset updater."""
+        _next_update = dt_util.now() - datetime.timedelta(minutes=1)
+        for key, val in self._update_functions.items():
+            self._update_functions[key] = _next_update
+
     def get_price_at(self, timestamp: datetime.datetime):
         """Get price at a specific time."""
         timestamp = timestamp.replace(minute=0, second=0, microsecond=0)
