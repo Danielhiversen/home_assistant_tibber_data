@@ -12,7 +12,11 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import ENERGY_KILO_WATT_HOUR, PERCENTAGE, ELECTRIC_CURRENT_AMPERE
+from homeassistant.const import (
+    ELECTRIC_CURRENT_AMPERE,
+    ENERGY_KILO_WATT_HOUR,
+    PERCENTAGE,
+)
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
