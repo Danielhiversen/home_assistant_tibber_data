@@ -56,7 +56,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         self._month_consumption: Set[Consumption] = set()
 
         self._session = aiohttp.ClientSession()
-        self.charger_name ={}
+        self.charger_name = {}
 
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
         self._update_functions = {
@@ -218,7 +218,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data[f"charger_{charger}_cost_month"] = charging_cost_month
             data[f"charger_{charger}_consumption_day"] = charging_consumption_day
             data[f"charger_{charger}_consumption_month"] = charging_consumption_month
-            data[f"charger_{charger}_is_charging"] = charger_data["meta_data"]["state"]["isCharging"]
+            data[f"charger_{charger}_is_charging"] = charger_data["meta_data"]["state"][
+                "isCharging"
+            ]
             for setting in charger_data["meta_data"]["settingsScreen"]["settings"]:
                 key = setting["key"]
                 val = setting["value"]
@@ -245,20 +247,18 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
             self.charger_name[charger] = _name = charger_data["meta_data"]["name"]
             data[f"charger_{charger}_consumption_month"] = charging_consumption_month
-            data[
-                f"charger_{charger}_cost_day_name"
-            ] = f"{_name} cost day"
-            data[
-                f"charger_{charger}_cost_month_name"
-            ] = f"{_name} cost month"
-            data[
-                f"charger_{charger}_consumption_day_name"
-            ] = f"{_name} consumption day"
+            data[f"charger_{charger}_cost_day_name"] = f"{_name} cost day"
+            data[f"charger_{charger}_cost_month_name"] = f"{_name} cost month"
+            data[f"charger_{charger}_consumption_day_name"] = f"{_name} consumption day"
             data[
                 f"charger_{charger}_consumption_month_name"
             ] = f"{_name} consumption month"
-            data[f"charger_{charger}_max_current_charger_name"] = f"{_name} max current charger"
-            data[f"charger_{charger}_max_circuit_power_name"] = f"{_name} max circuit power"
+            data[
+                f"charger_{charger}_max_current_charger_name"
+            ] = f"{_name} max current charger"
+            data[
+                f"charger_{charger}_max_circuit_power_name"
+            ] = f"{_name} max circuit power"
         return now + datetime.timedelta(minutes=15)
 
     async def _get_production_data(self, data, now):
