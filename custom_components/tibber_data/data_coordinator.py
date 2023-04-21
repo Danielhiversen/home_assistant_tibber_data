@@ -72,7 +72,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
     def reset_updater(self):
         """Reset updater."""
         _next_update = dt_util.now() - datetime.timedelta(minutes=1)
-        for key, val in self._update_functions.items():
+        for key in self._update_functions:
             self._update_functions[key] = _next_update
 
     def get_price_at(self, timestamp: datetime.datetime):
