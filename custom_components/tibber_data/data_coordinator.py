@@ -432,13 +432,13 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             total_cost += cons.cost
             total_cons += cons.cons
             total_cost_month_subsidy += (
-                cons.cost - self.calculate_subsidy(cons.price) * cons.cons
+                cons.cost - calculate_subsidy(cons.price) * cons.cons
             )
             if cons.day == now.date():
                 total_cost_day += cons.cost
                 total_cons_day += cons.cons
                 total_cost_day_subsidy += (
-                    cons.cost - self.calculate_subsidy(cons.price) * cons.cons
+                    cons.cost - calculate_subsidy(cons.price) * cons.cons
                 )
         data["monthly_avg_price"] = total_price / n_price if n_price > 0 else None
         data["customer_avg_price"] = total_cost / total_cons if total_cons > 0 else None
@@ -502,12 +502,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
     def subsidy(self):
         """Get subsidy."""
         price = self.get_price_at(dt_util.now())
-        return self.calculate_subsidy(price)
-
-    def calculate_subsidy(self, price):
-        if price < 0.7 * 1.25:
-            return 0
-        return 0.9 * (price - 0.7 * 1.25)
+        return calculate_subsidy(price)
 
     @property
     def chargers(self):
@@ -568,3 +563,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 )
             )
         return entity_descriptions
+
+def calculate_subsidy(price):
+    """Calculate subsidy."""
+    if price < 0.7 * 1.25:
+        return 0
+    return 0.9 * (price - 0.7 * 1.25)
