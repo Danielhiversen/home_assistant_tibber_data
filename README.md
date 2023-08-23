@@ -14,8 +14,8 @@ If you use this link to sign up for Tibber, you get 50 euro to buy smart home pr
 You get the following sensors:
 * Monthly avg price
 * Monthly avg customer price (Your price calculated as your consumption divided by your cost this month)
-* Estimated subsidy (Norway)
-* Estimated price with subsidy (Norway)
+* Subsidy (Norway)
+* Price with subsidy (Norway)
 * Average of 3 highest hourly consumption (from 3 different days)
 * Monthly accumulated cost with subsidy (Norway)
 * Daily accumulated cost with subsidy (only available if you have a real-time meter, Tibber Pulse)
@@ -27,7 +27,7 @@ You get the following sensors:
 
 Experimental and requires additional configuration:
 * Grid price (Only if your grid company is supported by Tibber)
-* Estimated total price with subsidy and grid price (Only if your grid company is supported by Tibber)
+* Total price with subsidy and grid price (Only if your grid company is supported by Tibber and for Norwegian homes)
 * Charger cost day (Requires a connected charger, like Easee or Zaptec)
 * Charger cost month (Requires a connected charger, like Easee or Zaptec)
 * Charger consumption day (Requires a connected charger, like Easee or Zaptec)

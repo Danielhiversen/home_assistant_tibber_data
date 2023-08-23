@@ -18,7 +18,12 @@ async def async_setup(hass, config):
     """Setup component."""
 
     hass.data[DOMAIN] = {}
-    for home in hass.data["tibber"].get_homes(only_active=True):
+    try:
+        tibber_data = hass.data["tibber"]
+    except KeyError:
+        _LOGGER.error("Tibber integration not set up")
+        return False
+    for home in tibber_data.get_homes(only_active=True):
         home = cast(tibber.TibberHome, home)
         if not home.info:
             for k in range(20):

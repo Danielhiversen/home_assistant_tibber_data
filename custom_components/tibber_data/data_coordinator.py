@@ -125,24 +125,29 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             if home["id"] != self.tibber_home.home_id:
                 continue
             data["grid_price"] = {}
+            prices_tomorrow_available = False
             for price_info in home["subscription"]["priceRating"]["hourly"]["entries"]:
-                data["grid_price"][
-                    dt_util.parse_datetime(price_info["time"])
-                ] = price_info["gridPrice"]
+                dt_time = dt_util.parse_datetime(price_info["time"])
+                if dt_time.date() == now.date() + datetime.timedelta(days=1):
+                    prices_tomorrow_available = True
+                data["grid_price"][dt_time] = price_info["gridPrice"]
+
             # Add all hourly entries to data
             data["hourly_prices"] = home["subscription"]["priceRating"]["hourly"][
                 "entries"
             ]
-
-        # make update happen between 13.15 and 13.30
-        if now.hour < 13 and now.minute < 15:
+        print(prices_tomorrow_available)
+        if now.hour < 13:
             return now.replace(
-                hour=13, minute=15, second=0, microsecond=0
-            ) + datetime.timedelta(seconds=randrange(60 * 15))
+                hour=13, minute=0, second=0, microsecond=0
+            ) + datetime.timedelta(seconds=randrange(60*3))
+        if not prices_tomorrow_available:
+            return now + datetime.timedelta(seconds=randrange(60 * 3))
+
         return (
-            now.replace(hour=13, minute=15, second=0, microsecond=0)
+            now.replace(hour=13, minute=0, second=0, microsecond=0)
             + datetime.timedelta(days=1)
-            + datetime.timedelta(seconds=randrange(60 * 15))
+            + datetime.timedelta(seconds=randrange(60 * 3))
         )
 
     async def _get_offline_evs_data_tibber(self, data, now):
@@ -416,6 +421,8 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         total_cost_day = 0
         total_cons = 0
         total_cons_day = 0
+        total_cost_day_subsidy = 0
+        total_cost_month_subsidy = 0
         for cons in month_consumption:
             _total_price += cons.price if cons.price else 0
             _n_price += 1 if cons.price else 0
@@ -425,27 +432,16 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             n_price += 1 if cons.price else 0
             total_cost += cons.cost
             total_cons += cons.cons
+            total_cost_month_subsidy += cons.cost - self.calculate_subsidy(cons.price) * cons.cons
             if cons.day == now.date():
                 total_cost_day += cons.cost
                 total_cons_day += cons.cons
+                total_cost_day_subsidy += cons.cost - self.calculate_subsidy(cons.price) * cons.cons
         data["monthly_avg_price"] = total_price / n_price if n_price > 0 else None
-        data["est_subsidy"] = (
-            max(0, (_total_price / _n_price - 0.7 * 1.25) * 0.9)
-            if _n_price > 0
-            else None
-        )
         data["customer_avg_price"] = total_cost / total_cons if total_cons > 0 else None
 
-        data["daily_cost_with_subsidy"] = (
-            (total_cost_day - data["est_subsidy"] * total_cons_day)
-            if (data["est_subsidy"] is not None and total_cost_day is not None)
-            else None
-        )
-        data["monthly_cost_with_subsidy"] = (
-            (total_cost - data["est_subsidy"] * total_cons)
-            if (data["est_subsidy"] is not None and total_cost is not None)
-            else None
-        )
+        data["daily_cost_with_subsidy"] = total_cost_day_subsidy
+        data["monthly_cost_with_subsidy"] = total_cost_month_subsidy
 
         yearly_cost = 0
         yearly_cons = 0
@@ -498,6 +494,17 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                 )
             )
         return entity_descriptions
+
+    @property
+    def subsidy(self):
+        """Get subsidy."""
+        price = self.get_price_at(dt_util.now())
+        return self.calculate_subsidy(price)
+
+    def calculate_subsidy(self, price):
+        if price < 0.7*1.25:
+            return 0
+        return 0.9 * (price - 0.7*1.25)
 
     @property
     def chargers(self):
