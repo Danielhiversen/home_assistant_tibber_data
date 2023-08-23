@@ -564,6 +564,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             )
         return entity_descriptions
 
+
 def calculate_subsidy(price):
     """Calculate subsidy."""
     if price < 0.7 * 1.25:
