@@ -136,7 +136,6 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             data["hourly_prices"] = home["subscription"]["priceRating"]["hourly"][
                 "entries"
             ]
-        print(prices_tomorrow_available)
         if now.hour < 13:
             return now.replace(
                 hour=13, minute=0, second=0, microsecond=0
