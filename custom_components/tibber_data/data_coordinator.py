@@ -566,7 +566,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
 
 def calculate_subsidy(price):
-    """Calculate subsidy."""
+    """Calculate subsidy. Norway."""
     if price < 0.7 * 1.25:
         return 0
     return 0.9 * (price - 0.7 * 1.25)
