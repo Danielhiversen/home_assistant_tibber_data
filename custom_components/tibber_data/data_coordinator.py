@@ -139,7 +139,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         if now.hour < 13:
             return now.replace(
                 hour=13, minute=0, second=0, microsecond=0
-            ) + datetime.timedelta(seconds=randrange(60*3))
+            ) + datetime.timedelta(seconds=randrange(60 * 3))
         if not prices_tomorrow_available:
             return now + datetime.timedelta(seconds=randrange(60 * 3))
 
@@ -431,11 +431,15 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             n_price += 1 if cons.price else 0
             total_cost += cons.cost
             total_cons += cons.cons
-            total_cost_month_subsidy += cons.cost - self.calculate_subsidy(cons.price) * cons.cons
+            total_cost_month_subsidy += (
+                cons.cost - self.calculate_subsidy(cons.price) * cons.cons
+            )
             if cons.day == now.date():
                 total_cost_day += cons.cost
                 total_cons_day += cons.cons
-                total_cost_day_subsidy += cons.cost - self.calculate_subsidy(cons.price) * cons.cons
+                total_cost_day_subsidy += (
+                    cons.cost - self.calculate_subsidy(cons.price) * cons.cons
+                )
         data["monthly_avg_price"] = total_price / n_price if n_price > 0 else None
         data["customer_avg_price"] = total_cost / total_cons if total_cons > 0 else None
 
@@ -501,9 +505,9 @@ class TibberDataCoordinator(DataUpdateCoordinator):
         return self.calculate_subsidy(price)
 
     def calculate_subsidy(self, price):
-        if price < 0.7*1.25:
+        if price < 0.7 * 1.25:
             return 0
-        return 0.9 * (price - 0.7*1.25)
+        return 0.9 * (price - 0.7 * 1.25)
 
     @property
     def chargers(self):

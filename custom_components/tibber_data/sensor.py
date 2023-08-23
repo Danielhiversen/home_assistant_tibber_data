@@ -25,7 +25,7 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
             ):
                 continue
 
-            if "subsidy" in entity_description.key and home.country not in ("NO", ):
+            if "subsidy" in entity_description.key and home.country not in ("NO",):
                 continue
 
             if (
