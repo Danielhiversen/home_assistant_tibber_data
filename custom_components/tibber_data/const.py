@@ -29,13 +29,13 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="est_subsidy",
-        name="Estimated subsidy",
+        key="subsidy",
+        name="Subsidy",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
-        key="est_current_price_with_subsidy",
-        name="Estimated price with subsidy",
+        key="current_price_with_subsidy",
+        name="Price with subsidy",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(
@@ -86,7 +86,7 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
 TIBBER_APP_SENSORS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="total_price_with_subsidy",
-        name="Estimated total price with subsidy and grid price",
+        name="Total price with subsidy and grid price",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(

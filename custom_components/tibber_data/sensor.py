@@ -25,6 +25,9 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
             ):
                 continue
 
+            if "subsidy" in entity_description.key and home.country not in ("NO",):
+                continue
+
             if (
                 entity_description.key in ("production_profit_month",)
                 and not home.has_production
@@ -84,8 +87,10 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        if self.entity_description.key == "est_current_price_with_subsidy":
-            native_value = self.update_est_current_price_with_subsidy_sensor()
+        if self.entity_description.key == "subsidy":
+            native_value = self.subsidy
+        elif self.entity_description.key == "current_price_with_subsidy":
+            native_value = self.update_current_price_with_subsidy_sensor()
         elif self.entity_description.key == "grid_price":
             native_value = self.update_grid_price_sensor()
         elif self.entity_description.key == "total_price_with_subsidy":
@@ -115,12 +120,12 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
 
         self.async_write_ha_state()
 
-    def update_est_current_price_with_subsidy_sensor(self):
-        """Update est_current_price_with_subsidy sensor."""
+    def update_current_price_with_subsidy_sensor(self):
+        """Update current_price_with_subsidy sensor."""
         price = self.coordinator.get_price_at(dt_util.now())
-        if self.coordinator.data.get("est_subsidy") is None or price is None:
+        if self.subsidy is None or price is None:
             return None
-        return price - self.coordinator.data["est_subsidy"]
+        return price - self.subsidy
 
     def update_total_price_sensor(self):
         """Update total_price sensor."""
@@ -216,9 +221,14 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
         )
         return native_value
 
+    @property
+    def subsidy(self):
+        """Get subsidy."""
+        return self.coordinator.subsidy
+
     def update_energy_total_price_with_subsidy_sensor(self):
         """Update energy_total_price_with_subsidy sensor."""
-        if self.coordinator.data.get("est_subsidy") is None:
+        if self.subsidy is None:
             return None
         grid_price = self.coordinator.data.get("grid_price", {}).get(
             dt_util.now().replace(minute=0, second=0, microsecond=0)
@@ -226,7 +236,9 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
         if grid_price is None:
             return None
         price = self.coordinator.get_price_at(dt_util.now())
-        return grid_price + price - self.coordinator.data["est_subsidy"]
+        if price is None:
+            return None
+        return grid_price + price - self.subsidy
 
     def update_energy_price_sensor(self):
         """Update energy_price sensor."""
