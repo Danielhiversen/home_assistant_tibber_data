@@ -8,5 +8,5 @@
     "iot_class": "cloud_polling",
     "issue_tracker": "https://github.com/Danielhiversen/home_assistant_tibber_data/issues",
     "requirements": ["pyTibber>=0.25.2"],
-    "version": "0.6.0"
+    "version": "0.7.0"
 }
