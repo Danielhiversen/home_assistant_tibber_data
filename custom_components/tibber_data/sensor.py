@@ -14,10 +14,10 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, config):
     """Set up the Tibber sensor."""
-    coordinator = hass.data[DOMAIN]["coordinator"]
 
     dev = []
     for home in hass.data["tibber"].get_homes(only_active=True):
+        coordinator = hass.data[DOMAIN]["coordinator"][home.home_id]
         for entity_description in SENSORS:
             if (
                 entity_description.key in ("daily_cost_with_subsidy",)

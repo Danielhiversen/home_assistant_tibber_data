@@ -18,28 +18,29 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
     """Set up the Tibber binary sensor."""
     if not config.get("password"):
         return
-    coordinator = hass.data[DOMAIN]["coordinator"]
     dev = []
-    for charger in coordinator.chargers:
-        dev.append(
-            TibberDataBinarySensor(
-                coordinator,
-                BinarySensorEntityDescription(
-                    key=f"charger_{charger}_sc_enabled",
-                    name=f"Smart charging enabled {coordinator.charger_name[charger]}",
-                ),
+    for home in hass.data["tibber"].get_homes(only_active=True):
+        coordinator = hass.data[DOMAIN]["coordinator"][home.home_id]
+        for charger in coordinator.chargers:
+            dev.append(
+                TibberDataBinarySensor(
+                    coordinator,
+                    BinarySensorEntityDescription(
+                        key=f"charger_{charger}_sc_enabled",
+                        name=f"Smart charging enabled {coordinator.charger_name[charger]}",
+                    ),
+                )
             )
-        )
-        dev.append(
-            TibberDataBinarySensor(
-                coordinator,
-                BinarySensorEntityDescription(
-                    key=f"charger_{charger}_is_charging",
-                    name=f"Is charging {coordinator.charger_name[charger]}",
-                ),
+            dev.append(
+                TibberDataBinarySensor(
+                    coordinator,
+                    BinarySensorEntityDescription(
+                        key=f"charger_{charger}_is_charging",
+                        name=f"Is charging {coordinator.charger_name[charger]}",
+                    ),
+                )
             )
-        )
-    async_add_entities(dev)
+        async_add_entities(dev)
 
 
 class TibberDataBinarySensor(

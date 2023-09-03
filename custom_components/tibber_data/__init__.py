@@ -23,6 +23,7 @@ async def async_setup(hass, config):
     except KeyError:
         _LOGGER.error("Tibber integration not set up")
         return False
+    hass.data[DOMAIN]["coordinator"] = {}
     for home in tibber_data.get_homes(only_active=True):
         home = cast(tibber.TibberHome, home)
         if not home.info:
@@ -41,8 +42,7 @@ async def async_setup(hass, config):
             hass, home, config[DOMAIN].get("email"), config[DOMAIN].get("password")
         )
         await coordinator.async_request_refresh()
-
-    hass.data[DOMAIN]["coordinator"] = coordinator
+        hass.data[DOMAIN]["coordinator"][home.home_id] = coordinator
 
     for component in PLATFORMS:
         hass.async_create_task(
