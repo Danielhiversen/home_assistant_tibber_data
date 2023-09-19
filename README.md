@@ -25,14 +25,6 @@ You get the following sensors:
 * Yearly consumption
 * Monthly consumption compared to last year, this month consumption compared to same hours last year
 
-Experimental and requires additional configuration:
-* Grid price (Only if your grid company is supported by Tibber)
-* Total price with subsidy and grid price (Only if your grid company is supported by Tibber and for Norwegian homes)
-* Charger cost day (Requires a connected charger, like Easee or Zaptec)
-* Charger cost month (Requires a connected charger, like Easee or Zaptec)
-* Charger consumption day (Requires a connected charger, like Easee or Zaptec)
-* Charger consumption month (Requires a connected charger, like Easee or Zaptec)
-
 
 
 ## Install
@@ -51,13 +43,6 @@ tibber_data:
 ```
 
 
-Optional for extra sensors:
-
-```
-tibber_data:
-  email: Your email registered at Tibber
-  password: Your Tibber password
-```
 
 [releases]: https://github.com/Danielhiversen/home_assistant_tibber_data/releases
 [releases-shield]: https://img.shields.io/github/release/Danielhiversen/home_assistant_tibber_data.svg?style=popout
