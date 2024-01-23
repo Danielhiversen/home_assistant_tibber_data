@@ -83,9 +83,9 @@ jobs:
           cache: 'pip'
       - name: Install depencency
         run: |
-          pip install dlint flakeheaven flake8-deprecated flake8-executable pylint mypy homeassistant pyTibber
-      - name: Flake8 Code Linter
-        run: flakeheaven lint $SRC_FOLDER
+          pip install dlint ruff flake8-deprecated flake8-executable pylint mypy homeassistant pyTibber
+      - name: Ruff Code Linter
+        run: ruff $SRC_FOLDER
 #      - name: Mypy Code Linter
 #        run: mypy $SRC_FOLDER
       - name: Pylint Code Linter
