@@ -18,16 +18,12 @@ profile = "black"
 follow_imports = "silent"
 ignore_missing_imports = true
 
-[tool.flakeheaven]
-max_line_length = 120
-# make output nice
-format = "grouped"
-# show line of source code in output
-show_source = true
+[tool.ruff]
+select = ["E", "F", "PL", "W", "ASYNC", "A", "DTZ", "G", "T20", "RET", "RUF", "TCH", "S", "B", "C90", "T10", "N", "PERF", "UP", "SLF", "TID", "TCH"]
+ignore = ["PLR0913", "C901", "S101", "PLR2004", "S311", "PLR0912", "PLR0915", "DTZ005", ]
+line-length = 120
+target-version = "py311"
 
-[tool.flakeheaven.plugins]
-pyflakes = ["+*"]
-"flake8-*" = ["+*"]
 
 [tool.pytest.ini_options]
 testpaths = [

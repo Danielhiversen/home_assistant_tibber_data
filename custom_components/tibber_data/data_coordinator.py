@@ -3,7 +3,6 @@ import asyncio
 import datetime
 import logging
 from random import randrange
-from typing import List, Set
 
 import aiohttp
 import tibber
@@ -43,13 +42,13 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             update_interval=datetime.timedelta(seconds=15),
         )
         self.tibber_home: tibber.TibberHome = tibber_home
-        tibber_home._timeout = 30
+        tibber_home._timeout = 30  # noqa: SLF001
         self.email = email
         self._password = password
         self._token = None
-        self._chargers: List[str] = []
-        self._offline_evs: List[dict] = []
-        self._month_consumption: Set[Consumption] = set()
+        self._chargers: list[str] = []
+        self._offline_evs: list[dict] = []
+        self._month_consumption: set[Consumption] = set()
 
         self._session = aiohttp.ClientSession()
         self.charger_name = {}
@@ -482,17 +481,15 @@ class TibberDataCoordinator(DataUpdateCoordinator):
     @property
     def offline_ev_entity_descriptions(self):
         """Return the entity descriptions for the offline ev."""
-        entity_descriptions = []
-        for ev_dev in self._offline_evs:
-            entity_descriptions.append(
-                SensorEntityDescription(
-                    key=f"offline_ev_{ev_dev['brandAndModel']}_soc",
-                    name=f"{ev_dev['brandAndModel']} soc",
-                    native_unit_of_measurement=PERCENTAGE,
-                    state_class=SensorStateClass.MEASUREMENT,
-                )
+        return [
+            SensorEntityDescription(
+                key=f"offline_ev_{ev_dev['brandAndModel']}_soc",
+                name=f"{ev_dev['brandAndModel']} soc",
+                native_unit_of_measurement=PERCENTAGE,
+                state_class=SensorStateClass.MEASUREMENT,
             )
-        return entity_descriptions
+            for ev_dev in self._offline_evs
+        ]
 
     @property
     def subsidy(self):
