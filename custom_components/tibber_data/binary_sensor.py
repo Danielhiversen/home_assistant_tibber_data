@@ -56,10 +56,7 @@ class TibberDataBinarySensor(
             f"{coordinator.tibber_home.home_id}_{entity_description.key}"
         )
 
-    @property
-    def _attr_name(self):
-        """Return the name of the sensor."""
-        return f"{self.entity_description.name} {self.coordinator.tibber_home.address1}"
+        self._attr_name = f"{self.entity_description.name} {self.coordinator.tibber_home.address1}"
 
     @callback
     def _handle_coordinator_update(self) -> None:

@@ -76,13 +76,11 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
                     coordinator.tibber_home.price_unit
                 )
 
-    @property
-    def _attr_name(self):
-        """Return the name of the sensor."""
         _name = self.coordinator.data.get(f"{self.entity_description.key}_name")
         if _name:
-            return _name
-        return f"{self.entity_description.name} {self.coordinator.tibber_home.address1}"
+            self._attr_name = _name
+        else:
+            self._attr_name = f"{self.entity_description.name} {self.coordinator.tibber_home.address1}"
 
     @callback
     def _handle_coordinator_update(self) -> None:
