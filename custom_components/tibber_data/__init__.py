@@ -31,7 +31,7 @@ async def async_setup(hass, config):
                 try:
                     await home.update_info()
                 except Exception:  # pylint: disable=broad-exception-caught
-                    _LOGGER.error("Error", exc_info=True)
+                    _LOGGER.exception("Error")
                     if k == 19:
                         raise
                     await asyncio.sleep(min(60, 2**k))
