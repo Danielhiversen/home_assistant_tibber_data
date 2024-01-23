@@ -555,7 +555,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     key=f"charger_{charger}_max_current_charger",
                     name="Max current power",
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
         return entity_descriptions
