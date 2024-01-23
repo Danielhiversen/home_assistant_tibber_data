@@ -12,11 +12,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import (
-    ELECTRIC_CURRENT_AMPERE,
-    ENERGY_KILO_WATT_HOUR,
-    PERCENTAGE,
-)
+from homeassistant.const import PERCENTAGE, UnitOfElectricCurrent, UnitOfEnergy
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
@@ -535,7 +531,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     key=f"charger_{charger}_consumption_day",
                     name="Charger consumption day",
                     device_class=SensorDeviceClass.ENERGY,
-                    native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+                    native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
                 )
             )
             entity_descriptions.append(
@@ -543,7 +539,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     key=f"charger_{charger}_consumption_month",
                     name="Charger consumption month",
                     device_class=SensorDeviceClass.ENERGY,
-                    native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+                    native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
                 )
             )
             entity_descriptions.append(
@@ -551,7 +547,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     key=f"charger_{charger}_max_circuit_power",
                     name="Max circuit power",
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
             entity_descriptions.append(
@@ -559,7 +555,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     key=f"charger_{charger}_max_current_charger",
                     name="Max current power",
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
         return entity_descriptions
@@ -567,6 +563,5 @@ class TibberDataCoordinator(DataUpdateCoordinator):
 
 def calculate_subsidy(price):
     """Calculate subsidy. Norway."""
-    if price < 0.7 * 1.25:
-        return 0
-    return 0.9 * (price - 0.7 * 1.25)
+    vat_factor = 1.25
+    return max(0, 0.9 * (price - 0.73 * vat_factor))
