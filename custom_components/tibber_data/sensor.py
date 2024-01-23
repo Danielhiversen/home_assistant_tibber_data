@@ -43,15 +43,19 @@ async def async_setup_platform(hass: HomeAssistant, _, async_add_entities, confi
 
         if config.get("password"):
             for entity_description in TIBBER_APP_SENSORS:
-                dev.append(TibberDataSensor(coordinator, entity_description))
+                dev.append(  # noqa: PERF401
+                    TibberDataSensor(coordinator, entity_description)
+                )
             for (
                 chargers_entity_descriptions
             ) in coordinator.chargers_entity_descriptions:
-                dev.append(TibberDataSensor(coordinator, chargers_entity_descriptions))
+                dev.append(  # noqa: PERF401
+                    TibberDataSensor(coordinator, chargers_entity_descriptions)
+                )
             for (
                 offline_ev_entity_descriptions
             ) in coordinator.offline_ev_entity_descriptions:
-                dev.append(
+                dev.append(  # noqa: PERF401
                     TibberDataSensor(coordinator, offline_ev_entity_descriptions)
                 )
 
@@ -214,10 +218,9 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             self._attr_extra_state_attributes["raw_tomorrow"] = local_raw_tomorrow
         else:
             _LOGGER.debug("No grid price available")
-        native_value = self.coordinator.data.get(self.entity_description.key, {}).get(
+        return self.coordinator.data.get(self.entity_description.key, {}).get(
             dt_util.now().replace(minute=0, second=0, microsecond=0)
         )
-        return native_value
 
     @property
     def subsidy(self):

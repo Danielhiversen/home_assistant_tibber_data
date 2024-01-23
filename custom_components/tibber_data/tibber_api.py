@@ -19,8 +19,8 @@ async def get_historic_data(
     query = """
             {{
               viewer {{
-                home(id: "{0}") {{
-                  consumption(resolution: HOURLY, last: 9600, before:"{1}") {{
+                home(id: "{}") {{
+                  consumption(resolution: HOURLY, last: 9600, before:"{}") {{
                     nodes {{
                       consumption
                       cost
@@ -53,8 +53,8 @@ async def get_historic_production_data(
     query = """
             {{
               viewer {{
-                home(id: "{0}") {{
-                  production(resolution: HOURLY, last: 744, before:"{1}") {{
+                home(id: "{}") {{
+                  production(resolution: HOURLY, last: 744, before:"{}") {{
                     nodes {{
                         from
                         profit
@@ -172,7 +172,7 @@ async def get_tibber_chargers_data(
                 + '" resolution: "DAILY" from: "'
                 + str(now.year)
                 + "-"
-                + "{:02d}".format(now.month)
+                + f"{now.month:02d}"
                 + '-01T00:00:00+0200" ) { from consumption energyCost } } } }',
             }
         ),
