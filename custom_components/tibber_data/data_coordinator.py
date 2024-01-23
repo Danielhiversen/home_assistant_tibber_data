@@ -13,9 +13,9 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
-    ELECTRIC_CURRENT_AMPERE,
-    ENERGY_KILO_WATT_HOUR,
     PERCENTAGE,
+    UnitOfEnergy,
+    UnitOfElectricCurrent,
 )
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
@@ -535,7 +535,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     key=f"charger_{charger}_consumption_day",
                     name="Charger consumption day",
                     device_class=SensorDeviceClass.ENERGY,
-                    native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+                    native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
                 )
             )
             entity_descriptions.append(
@@ -543,7 +543,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     key=f"charger_{charger}_consumption_month",
                     name="Charger consumption month",
                     device_class=SensorDeviceClass.ENERGY,
-                    native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+                    native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
                 )
             )
             entity_descriptions.append(
@@ -551,7 +551,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
                     key=f"charger_{charger}_max_circuit_power",
                     name="Max circuit power",
                     device_class=SensorDeviceClass.CURRENT,
-                    native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
                 )
             )
             entity_descriptions.append(
