@@ -5,7 +5,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import ENERGY_KILO_WATT_HOUR, Platform
+from homeassistant.const import Platform, UnitOfEnergy
 
 DOMAIN = "tibber_data"
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
@@ -16,7 +16,7 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         name="Average of 3 highest hourly consumption",
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.ENERGY,
-        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
     ),
     SensorEntityDescription(
         key="monthly_avg_price",
@@ -55,14 +55,14 @@ SENSORS: tuple[SensorEntityDescription, ...] = (
         name="Yearly consumption",
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.ENERGY,
-        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
     ),
     SensorEntityDescription(
         key="compare_cons",
         name="Monthly consumption compared to last year",
         state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.ENERGY,
-        native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
     ),
     SensorEntityDescription(
         key="monthly_cost_with_subsidy",
