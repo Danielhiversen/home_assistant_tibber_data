@@ -24,6 +24,7 @@ ignore = ["PLR0913", "C901", "S101"]
 line-length = 120
 target-version = "py311"
 
+
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
