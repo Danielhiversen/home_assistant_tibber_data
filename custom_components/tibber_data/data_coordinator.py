@@ -469,7 +469,7 @@ class TibberDataCoordinator(DataUpdateCoordinator):
             if _hour.get("consumption") is None:
                 continue
             date = dt_util.parse_datetime(_hour.get("from"))
-            _date = date.replace(year=date.year + 1)
+            _date = date + datetime.timedelta(days=365)
             if _date in month_cons_ts:
                 prev_year_month_cons += _hour["consumption"]
 
