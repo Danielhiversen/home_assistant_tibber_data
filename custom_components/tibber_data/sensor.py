@@ -76,9 +76,16 @@ class TibberDataSensor(SensorEntity, CoordinatorEntity["TibberDataCoordinator"])
             if entity_description.device_class == SensorDeviceClass.MONETARY:
                 self._attr_native_unit_of_measurement = coordinator.tibber_home.currency
             else:
-                self._attr_native_unit_of_measurement = (
-                    coordinator.tibber_home.price_unit
-                )
+                self._attr_native_unit_of_measurement = coordinator.tibber_home.price_unit
+        # Set correct state_class based on device_class
+        if entity_description.device_class == SensorDeviceClass.ENERGY:
+            self._attr_state_class = "total"
+        elif entity_description.device_class == SensorDeviceClass.MONETARY:
+            self._attr_state_class = "total"
+        elif entity_description.device_class == SensorDeviceClass.POWER:
+            self._attr_state_class = "measurement"
+        else:
+            self._attr_state_class = None
 
         _name = self.coordinator.data.get(f"{self.entity_description.key}_name")
         if _name:
